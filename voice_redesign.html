@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Mise AI — Let's Talk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="voice_redesign.css">
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════
+     DESKTOP LAYOUT  (≥ 900px)
+════════════════════════════════════════════ -->
+<div class="desktop" id="desktopView">
+
+  <!-- Left column: identity + controls -->
+  <aside class="d-left">
+    <div class="d-top-bar">
+      <a href="mise-ai.html"><button class="d-back-btn" id="dBtnBack" aria-label="Back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15.75 19.5 8.25 12l7.5-7.5"/></svg>
+      </button></a>
+      <button class="d-menu-btn" id="dBtnMenu" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+
+    <!-- Brand -->
+    <div class="d-brand">
+      <div class="d-logo-ring">
+        <img src="mise_ai_logo.png">
+      </div>
+      <span class="d-brand-name"><img src="image.png"></span>
+      <span class="d-brand-sub">Culinary Voice Assistant</span>
+    </div>
+
+    <!-- Voice visualiser -->
+    <div class="d-voice-ui" id="dVoiceUI">
+      <div class="d-orb-wrap">
+        <div class="d-orb" id="dOrb"></div>
+        <div class="d-orb-ring r1"></div>
+        <div class="d-orb-ring r2"></div>
+        <div class="d-orb-ring r3"></div>
+      </div>
+      <div class="d-wave" id="dWave">
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <p class="d-voice-label" id="dVoiceLabel">Tap mic to speak</p>
+      <p class="d-voice-interim" id="dVoiceInterim"></p>
+    </div>
+
+    <!-- Controls -->
+    <div class="d-controls">
+      <button class="d-ctrl-secondary" id="dBtnKeyboard" title="Type" aria-label="Toggle keyboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="4" width="20" height="16" rx="3"/>
+          <circle cx="8"  cy="8"  r="1" fill="currentColor"/>
+          <circle cx="12" cy="8"  r="1" fill="currentColor"/>
+          <circle cx="16" cy="8"  r="1" fill="currentColor"/>
+          <circle cx="8"  cy="12" r="1" fill="currentColor"/>
+          <circle cx="12" cy="12" r="1" fill="currentColor"/>
+          <circle cx="16" cy="12" r="1" fill="currentColor"/>
+          <line x1="8" y1="16" x2="16" y2="16"/>
+        </svg>
+      </button>
+
+      <button class="d-mic-btn" id="dBtnMic" aria-label="Voice input">
+        <svg class="mic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="2" width="6" height="11" rx="3"/>
+          <path d="M5 10a7 7 0 0 0 14 0"/>
+          <line x1="12" y1="19" x2="12" y2="22"/>
+          <line x1="8"  y1="22" x2="16" y2="22"/>
+        </svg>
+      </button>
+
+      <button class="d-ctrl-secondary" id="dBtnClear" title="Clear chat" aria-label="Clear">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="d-status" id="dStatus"></div>
+    <div class="d-no-support" id="dNoSupport">Voice not supported — use keyboard</div>
+
+  </aside>
+
+  <!-- Right column: chat -->
+  <section class="d-right">
+    <div class="d-chat-header">
+      <span class="d-chat-label">Let's Talk</span>
+      <div class="d-header-dots"><span></span><span></span><span></span></div>
+    </div>
+
+    <div class="d-glow"></div>
+
+    <!-- Empty state -->
+    <div class="d-empty" id="dEmpty">
+      <div class="d-empty-icon">🍳</div>
+      <p>Ask me anything about food,<br>recipes, or ingredients.</p>
+      <div class="d-suggestions">
+        <button class="d-sug" data-text="What can I cook with tomatoes and pasta?">Tomato pasta ideas</button>
+        <button class="d-sug" data-text="How do I make Jollof Rice?">Jollof Rice recipe</button>
+        <button class="d-sug" data-text="What spices go into pepper soup?">Pepper soup spices</button>
+        <button class="d-sug" data-text="Quick 15-minute dinner ideas">Quick dinner ideas</button>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="d-chat-area" id="dChatArea"></div>
+
+    <!-- Keyboard input -->
+    <div class="d-type-bar" id="dTypeBar">
+      <input class="d-type-input" id="dTypeInput" placeholder="Ask about any food or recipe…" autocomplete="off" spellcheck="false"/>
+      <button class="d-send-btn" id="dTypeSend" aria-label="Send">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 2L11 13"/><path d="M22 2 15 22 11 13 2 9l20-7Z"/>
+        </svg>
+      </button>
+    </div>
+  </section>
+
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     MOBILE LAYOUT  (< 900px)
+════════════════════════════════════════════ -->
+<div class="mobile" id="mobileView">
+
+  <!-- Ambient glow -->
+  <div class="m-glow-bg"></div>
+
+  <!-- Header -->
+  <header class="m-header">
+    <button class="m-back-btn" id="mBtnBack" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15.75 19.5 8.25 12l7.5-7.5"/></svg>
+    </button>
+    <div class="m-header-center">
+      <svg class="m-logo-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="100" cy="100" r="60" fill="none" stroke="#E8611A" stroke-width="8" stroke-linecap="round"/>
+        <g transform="rotate(-54,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+        <g transform="rotate(18,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+        <g transform="rotate(90,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+        <g transform="rotate(162,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+        <g transform="rotate(234,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+        <circle cx="100" cy="100" r="7" fill="none" stroke="#E8611A" stroke-width="4.5"/>
+        <line x1="96" y1="51" x2="104" y2="51" stroke="#E8611A" stroke-width="4" stroke-linecap="round"/>
+        <line x1="145" y1="76" x2="149" y2="69" stroke="#E8611A" stroke-width="4" stroke-linecap="round"/>
+        <line x1="140" y1="136" x2="145" y2="143" stroke="#E8611A" stroke-width="4" stroke-linecap="round"/>
+        <line x1="60" y1="136" x2="55" y2="143" stroke="#E8611A" stroke-width="4" stroke-linecap="round"/>
+        <line x1="55" y1="76" x2="51" y2="69" stroke="#E8611A" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+      <span class="m-title">Let's Talk</span>
+    </div>
+    <div class="m-header-spacer" aria-hidden="true"></div>
+  </header>
+
+  <!-- Main -->
+  <main class="m-main" id="mMain">
+
+    <!-- Hero (shown before chat) -->
+    <div class="m-hero" id="mHero">
+      <div class="m-orb-wrap">
+        <div class="m-orb" id="mOrb"></div>
+        <div class="m-orb-ring r1"></div>
+        <div class="m-orb-ring r2"></div>
+      </div>
+      <img src="image.png" class="m-hero-img" alt="Mise AI"/>
+      <p class="m-hero-sub">Your culinary voice assistant</p>
+      <div class="m-sug-row">
+        <button class="m-sug" data-text="What can I cook tonight?">Tonight's dinner?</button>
+        <button class="m-sug" data-text="How do I make Jollof Rice?">Jollof Rice</button>
+        <button class="m-sug" data-text="Quick healthy breakfast ideas">Quick breakfast</button>
+      </div>
+    </div>
+
+    <!-- Chat area -->
+    <div class="m-chat-area" id="mChatArea"></div>
+
+    <!-- Voice UI (shown while listening) -->
+    <div class="m-voice-ui" id="mVoiceUI">
+      <div class="m-wave" id="mWave">
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <p class="m-voice-label" id="mVoiceLabel">Listening…</p>
+      <p class="m-voice-interim" id="mVoiceInterim"></p>
+    </div>
+
+    <!-- Type bar -->
+    <div class="m-type-bar" id="mTypeBar">
+      <input class="m-type-input" id="mTypeInput" placeholder="Type a message…" autocomplete="off" spellcheck="false"/>
+      <button class="m-type-send" id="mTypeSend" aria-label="Send">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 2L11 13"/><path d="M22 2 15 22 11 13 2 9l20-7Z"/>
+        </svg>
+      </button>
+    </div>
+
+    <p class="m-no-support" id="mNoSupport">Voice not supported — use keyboard</p>
+  </main>
+
+  <!-- Status -->
+  <div class="m-status" id="mStatus"></div>
+
+  <!-- Bottom controls -->
+  <div class="m-controls">
+    <button class="m-ctrl" id="mBtnKeyboard" aria-label="Toggle keyboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="3"/>
+        <circle cx="8"  cy="8"  r="1" fill="currentColor"/>
+        <circle cx="12" cy="8"  r="1" fill="currentColor"/>
+        <circle cx="16" cy="8"  r="1" fill="currentColor"/>
+        <circle cx="8"  cy="12" r="1" fill="currentColor"/>
+        <circle cx="12" cy="12" r="1" fill="currentColor"/>
+        <circle cx="16" cy="12" r="1" fill="currentColor"/>
+      </svg>
+    </button>
+    <button class="m-mic-btn" id="mBtnMic" aria-label="Voice input">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="2" width="6" height="11" rx="3"/>
+        <path d="M5 10a7 7 0 0 0 14 0"/>
+        <line x1="12" y1="19" x2="12" y2="22"/>
+        <line x1="8"  y1="22" x2="16" y2="22"/>
+      </svg>
+    </button>
+    <button class="m-ctrl" id="mBtnClear" aria-label="Clear chat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+      </svg>
+    </button>
+  </div>
+
+</div>
+
+<script src="voice_redesign.js"></script>
+</body>
+</html>

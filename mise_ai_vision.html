@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mise AI — Food Vision</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ox:#E8611A; --ox-hi:#FF7C38; --ox-lo:#A84410;
+  --ox-glow:rgba(232,97,26,.65); --ox-ring:rgba(232,97,26,.28);
+  --ox-wash:rgba(232,97,26,.08); --ox-wash2:rgba(232,97,26,.14);
+  --bg:#050200; --panel:rgba(9,5,1,.96); --glass:rgba(255,255,255,.03);
+  --line:rgba(255,255,255,.07); --line-ox:rgba(232,97,26,.2);
+  --tx:#F4E3D0; --tx2:rgba(244,227,208,.58); --tx3:rgba(244,227,208,.28);
+  --green:#52d97a; --mono:'DM Mono',monospace;
+}
+html,body{height:100%;width:100%;background:var(--bg);color:var(--tx);
+  font-family:'DM Sans',sans-serif;font-weight:300;overflow:hidden;
+  -webkit-font-smoothing:antialiased}
+
+/* ─── LAYOUT ─── */
+.app{display:grid;grid-template-columns:1fr 400px;grid-template-rows:58px 1fr;height:100vh;width:100vw}
+
+/* ─── TOPBAR ─── */
+.topbar{
+  grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;
+  background:linear-gradient(180deg,rgba(8,4,1,.98) 0%,rgba(6,3,0,.95) 100%);
+  border-bottom:1px solid var(--line-ox);
+  backdrop-filter:blur(20px);z-index:100;
+  box-shadow:0 1px 0 rgba(232,97,26,.08),0 4px 24px rgba(0,0,0,.4);
+}
+.tb-left{display:flex;align-items:center;gap:16px}
+.tb-back{width:34px;height:34px;border-radius:50%;background:transparent;
+  border:1px solid var(--ox-ring);color:var(--tx2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s,border-color .2s,color .2s,transform .15s;flex-shrink:0}
+.tb-back:hover{background:var(--ox-wash2);border-color:rgba(232,97,26,.5);
+  color:var(--ox);transform:translateX(-2px)}
+.tb-logo{width:32px;height:32px;filter:drop-shadow(0 0 10px var(--ox-glow));animation:breathe 4s ease-in-out infinite}
+@keyframes breathe{
+  0%,100%{filter:drop-shadow(0 0 8px var(--ox-glow))}
+  50%{filter:drop-shadow(0 0 18px var(--ox-glow)) drop-shadow(0 0 36px rgba(232,97,26,.3))}
+}
+.tb-brand{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;
+  letter-spacing:.22em;color:var(--ox);
+  text-shadow:0 0 20px var(--ox-glow),0 0 40px rgba(232,97,26,.2)}
+.tb-pipe{width:1px;height:22px;background:var(--line-ox)}
+.tb-sub{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--tx3)}
+.tb-right{display:flex;align-items:center;gap:20px}
+.tb-status{display:flex;align-items:center;gap:8px;font-size:11px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);
+  padding:5px 12px;border-radius:100px;
+  border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#2a2a2a;
+  transition:background .3s,box-shadow .3s;flex-shrink:0}
+.status-dot.live{background:var(--green);box-shadow:0 0 8px var(--green);animation:dpulse 2s ease-in-out infinite}
+.status-dot.scanning{background:var(--ox);box-shadow:0 0 10px var(--ox-glow);animation:dpulse .6s ease-in-out infinite}
+.status-dot.error{background:#ff5252;box-shadow:0 0 8px rgba(255,82,82,.6)}
+@keyframes dpulse{0%,100%{opacity:1}50%{opacity:.35}}
+.tb-pill{padding:6px 16px;border-radius:100px;background:transparent;
+  border:1px solid var(--ox-ring);color:var(--ox);font-family:'DM Sans',sans-serif;
+  font-size:11px;font-weight:500;letter-spacing:.08em;cursor:pointer;
+  transition:background .2s,border-color .2s,transform .15s}
+.tb-pill:hover{background:var(--ox-wash2);border-color:rgba(232,97,26,.5);transform:translateY(-1px)}
+.tb-pill.active{background:var(--ox-wash2);border-color:rgba(232,97,26,.5)}
+
+/* ─── VIDEO PANEL ─── */
+.video-panel{position:relative;overflow:hidden;background:#000;cursor:crosshair}
+#cam-video{width:100%;height:100%;object-fit:cover;display:block;
+  transition:filter .3s}
+#cam-video.dim{filter:brightness(.4)}
+#snap-canvas{display:none;position:absolute;inset:0;width:100%;height:100%}
+
+/* No camera */
+.no-cam{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:18px;
+  background:radial-gradient(ellipse 60% 50% at 50% 50%,rgba(180,55,8,.12) 0%,transparent 70%),
+    #050200}
+.no-cam-ring{width:72px;height:72px;border-radius:50%;
+  border:1.5px solid var(--line-ox);
+  display:flex;align-items:center;justify-content:center;color:var(--tx3);
+  background:radial-gradient(circle,rgba(232,97,26,.05) 0%,transparent 70%)}
+.no-cam h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;
+  color:var(--tx);text-align:center}
+.no-cam p{font-size:13px;color:var(--tx2);text-align:center;line-height:1.6;max-width:240px}
+.no-cam-btn{padding:11px 28px;border-radius:100px;
+  background:linear-gradient(135deg,var(--ox-hi),var(--ox-lo));
+  border:none;color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;
+  font-weight:500;letter-spacing:.06em;cursor:pointer;
+  box-shadow:0 4px 20px rgba(232,97,26,.4);
+  transition:transform .15s,box-shadow .2s}
+.no-cam-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(232,97,26,.55)}
+
+/* Grid overlay */
+.grid-ov{position:absolute;inset:0;pointer-events:none;opacity:0;
+  transition:opacity .4s;
+  background-image:linear-gradient(rgba(232,97,26,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(232,97,26,.06) 1px,transparent 1px);
+  background-size:64px 64px}
+.grid-ov.on{opacity:1}
+
+/* Scan overlay elements */
+.scan-ov{position:absolute;inset:0;pointer-events:none}
+.brk{position:absolute;width:44px;height:44px;border-color:var(--ox);border-style:solid;
+  opacity:.5;transition:opacity .3s,box-shadow .3s}
+.brk.tl{top:20px;left:20px;border-width:2px 0 0 2px}
+.brk.tr{top:20px;right:20px;border-width:2px 2px 0 0}
+.brk.bl{bottom:20px;left:20px;border-width:0 0 2px 2px}
+.brk.br{bottom:20px;right:20px;border-width:0 2px 2px 0}
+.brk.active{opacity:1;box-shadow:0 0 14px var(--ox-glow)}
+
+.scan-line{position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--ox) 20%,var(--ox-hi) 50%,var(--ox) 80%,transparent);
+  opacity:0;top:10%;pointer-events:none;
+  box-shadow:0 0 14px var(--ox-glow),0 0 28px rgba(232,97,26,.35)}
+.scan-line.on{opacity:1;animation:scanswp 1.8s ease-in-out infinite}
+@keyframes scanswp{0%{top:10%}100%{top:90%}}
+
+/* Detection boxes */
+.det-box{position:absolute;border:1.5px solid var(--ox);border-radius:4px;
+  pointer-events:none;animation:boxin .3s ease both;
+  box-shadow:0 0 16px rgba(232,97,26,.3),inset 0 0 24px rgba(232,97,26,.05)}
+@keyframes boxin{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.det-lbl{position:absolute;top:-30px;left:-1px;
+  background:linear-gradient(135deg,var(--ox),var(--ox-lo));
+  color:#fff;font-family:var(--mono);font-size:10px;
+  padding:4px 10px;border-radius:5px 5px 5px 0;
+  white-space:nowrap;text-transform:uppercase;letter-spacing:.08em;
+  box-shadow:0 2px 10px rgba(232,97,26,.4)}
+.det-conf{position:absolute;bottom:-24px;right:-1px;
+  font-family:var(--mono);font-size:10px;color:var(--ox);letter-spacing:.06em}
+
+/* Flash */
+.flash{position:absolute;inset:0;background:rgba(255,255,255,.12);
+  pointer-events:none;animation:flashout .3s ease both}
+@keyframes flashout{0%{opacity:1}100%{opacity:0}}
+
+/* HUD text */
+.hud-tl,.hud-tr,.hud-br,.hud-bl{position:absolute;pointer-events:none;
+  font-family:var(--mono);font-size:10px;line-height:1.9;letter-spacing:.08em}
+.hud-tl{top:68px;left:24px;color:rgba(232,97,26,.55)}
+.hud-tr{top:68px;right:24px;color:rgba(232,97,26,.55);text-align:right}
+.hud-br{bottom:84px;right:24px;color:rgba(232,97,26,.35);text-align:right}
+.hud-bl{bottom:84px;left:24px;color:rgba(232,97,26,.35)}
+
+/* Crosshair center */
+.xhair{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:28px;height:28px;pointer-events:none;opacity:.3}
+.xhair::before,.xhair::after{content:'';position:absolute;background:var(--ox)}
+.xhair::before{width:1px;height:100%;left:50%;top:0}
+.xhair::after{width:100%;height:1px;top:50%;left:0}
+.xhair-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:56px;height:56px;border-radius:50%;
+  border:1px solid rgba(232,97,26,.25);pointer-events:none;opacity:.4}
+
+/* Bottom cam bar */
+.cam-bar{position:absolute;bottom:0;left:0;right:0;height:84px;
+  background:linear-gradient(to top,rgba(5,2,0,.96) 0%,transparent 100%);
+  display:flex;align-items:center;justify-content:center;gap:24px;padding:0 24px}
+.cb-btn{display:flex;flex-direction:column;align-items:center;gap:5px;
+  background:none;border:none;color:var(--tx2);cursor:pointer;padding:6px 14px;
+  font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;transition:color .2s}
+.cb-btn:hover{color:var(--ox)}
+.cb-btn svg{transition:transform .2s}
+.cb-btn:hover svg{transform:scale(1.12)}
+
+.cb-main{width:60px;height:60px;border-radius:50%;
+  background:linear-gradient(145deg,var(--ox-hi),var(--ox),var(--ox-lo));
+  border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  box-shadow:0 0 0 4px rgba(232,97,26,.15),0 0 24px var(--ox-glow),0 4px 16px rgba(0,0,0,.4);
+  transition:transform .15s,box-shadow .2s;position:relative;overflow:hidden}
+.cb-main::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.15) 0%,transparent 60%)}
+.cb-main:hover{transform:scale(1.07);
+  box-shadow:0 0 0 6px rgba(232,97,26,.2),0 0 36px var(--ox-glow),0 6px 20px rgba(0,0,0,.5)}
+.cb-main:active{transform:scale(.97)}
+.cb-main.busy{pointer-events:none;animation:mainpulse 1s ease-in-out infinite}
+@keyframes mainpulse{0%,100%{box-shadow:0 0 0 4px rgba(232,97,26,.2),0 0 24px var(--ox-glow)}
+  50%{box-shadow:0 0 0 10px rgba(232,97,26,.08),0 0 48px var(--ox-glow)}}
+
+/* ─── SIDEBAR ─── */
+.sidebar{border-left:1px solid var(--line-ox);background:var(--panel);
+  display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:-4px 0 30px rgba(0,0,0,.3)}
+
+.s-tabs{display:flex;border-bottom:1px solid var(--line);flex-shrink:0;
+  background:rgba(0,0,0,.3)}
+.s-tab{flex:1;padding:14px 8px;background:none;border:none;
+  font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--tx3);cursor:pointer;
+  border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .2s,border-color .2s}
+.s-tab.on{color:var(--ox);border-bottom-color:var(--ox)}
+.s-tab:hover:not(.on){color:var(--tx2)}
+
+.tab-pane{display:none;flex-direction:column;flex:1;overflow:hidden}
+.tab-pane.on{display:flex}
+
+.s-scroll{flex:1;overflow-y:auto;padding:20px 18px;
+  scrollbar-width:thin;scrollbar-color:var(--line-ox) transparent}
+.s-scroll::-webkit-scrollbar{width:4px}
+.s-scroll::-webkit-scrollbar-track{background:transparent}
+.s-scroll::-webkit-scrollbar-thumb{background:var(--line-ox);border-radius:4px}
+
+/* States */
+.state-idle{display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:16px;height:100%;text-align:center;padding:24px}
+.idle-ring{width:60px;height:60px;border-radius:50%;
+  border:1.5px solid var(--line-ox);
+  display:flex;align-items:center;justify-content:center;color:var(--tx3);
+  background:radial-gradient(circle,rgba(232,97,26,.05) 0%,transparent 70%);
+  animation:idle-rotate 10s linear infinite}
+@keyframes idle-rotate{to{transform:rotate(360deg)}}
+.state-idle p{font-size:13px;color:var(--tx2);line-height:1.65;max-width:220px}
+.state-idle code{font-family:var(--mono);font-size:10px;color:var(--tx3);letter-spacing:.1em}
+
+.state-busy{display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:18px;height:100%;text-align:center}
+.busy-ring{width:52px;height:52px;border-radius:50%;
+  border:2px solid var(--ox-ring);border-top-color:var(--ox);
+  animation:spin 1s linear infinite;
+  box-shadow:0 0 20px rgba(232,97,26,.2)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.busy-label{font-family:var(--mono);font-size:11px;color:var(--ox);
+  letter-spacing:.14em;text-transform:uppercase;animation:blink .9s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.busy-step{font-family:var(--mono);font-size:10px;color:var(--tx3);
+  letter-spacing:.1em;margin-top:2px}
+
+.state-result{animation:fadein .4s ease both}
+@keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Food card */
+.food-card{background:rgba(255,255,255,.025);border:1px solid var(--line-ox);
+  border-radius:14px;overflow:hidden;margin-bottom:14px}
+.fc-head{padding:14px 16px 12px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:10px}
+.fc-name{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:400;
+  color:var(--tx);line-height:1.2}
+.fc-badge{font-family:var(--mono);font-size:10px;padding:3px 9px;
+  border-radius:100px;background:var(--ox-wash2);
+  color:var(--ox);border:1px solid var(--ox-ring);letter-spacing:.06em;
+  white-space:nowrap;flex-shrink:0}
+.fc-body{padding:14px 16px}
+.fc-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.fc-tag{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:100px;
+  background:var(--glass);border:1px solid var(--line);
+  color:var(--tx3);letter-spacing:.06em;text-transform:uppercase}
+.fc-tag.hi{background:var(--ox-wash);border-color:var(--ox-ring);color:var(--ox)}
+.fc-desc{font-size:13px;color:var(--tx2);line-height:1.7;margin-bottom:14px}
+
+.sec-lbl{font-size:10px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--tx3);margin:14px 0 8px}
+
+/* Macro bars */
+.macro-row{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:4px}
+.macro-item{display:flex;align-items:center;gap:10px}
+.macro-name{font-family:var(--mono);font-size:10px;color:var(--tx3);
+  letter-spacing:.06em;width:52px;flex-shrink:0}
+.macro-bar-bg{flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
+.macro-bar-fill{height:100%;border-radius:4px;transition:width .8s ease;
+  background:linear-gradient(90deg,var(--ox-lo),var(--ox))}
+.macro-val{font-family:var(--mono);font-size:10px;color:var(--tx2);
+  width:36px;text-align:right;flex-shrink:0}
+
+/* Nutrient pills */
+.pill-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.pill{font-family:var(--mono);font-size:10px;padding:4px 9px;border-radius:100px;
+  background:var(--glass);border:1px solid var(--line);color:var(--tx2);letter-spacing:.04em}
+.pill.hi{border-color:var(--ox-ring);color:var(--ox);background:var(--ox-wash)}
+
+/* Ingredient list */
+.ing-item{display:flex;align-items:center;gap:10px;padding:8px 0;
+  border-bottom:1px solid var(--line);font-size:13px;color:var(--tx2)}
+.ing-item:last-child{border:none}
+.ing-dot{width:5px;height:5px;border-radius:50%;background:var(--ox);
+  flex-shrink:0;box-shadow:0 0 6px var(--ox-glow)}
+
+/* Recipe steps */
+.step{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);
+  font-size:12px;color:var(--tx2);line-height:1.65}
+.step:last-child{border:none}
+.step-n{font-family:var(--mono);font-size:10px;color:var(--ox);
+  background:var(--ox-wash);border:1px solid var(--ox-ring);
+  border-radius:5px;padding:2px 7px;flex-shrink:0;height:fit-content}
+
+/* History items */
+.h-scroll{flex:1;overflow-y:auto;padding:10px;
+  scrollbar-width:thin;scrollbar-color:var(--line-ox) transparent}
+.h-empty{display:flex;flex-direction:column;align-items:center;
+  justify-content:center;height:100%;gap:12px;text-align:center}
+.h-empty p{font-size:13px;color:var(--tx2)}
+.h-empty code{font-family:var(--mono);font-size:10px;color:var(--tx3);letter-spacing:.08em}
+.h-item{display:flex;align-items:center;gap:12px;padding:10px;
+  border-radius:10px;cursor:pointer;transition:background .2s;margin-bottom:3px}
+.h-item:hover{background:rgba(255,255,255,.03)}
+.h-thumb{width:46px;height:46px;border-radius:9px;
+  background:var(--ox-wash);border:1px solid var(--line-ox);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;flex-shrink:0;overflow:hidden}
+.h-thumb img{width:100%;height:100%;object-fit:cover}
+.h-info{flex:1;min-width:0}
+.h-name{font-size:13px;color:var(--tx);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+.h-time{font-family:var(--mono);font-size:10px;color:var(--tx3);letter-spacing:.04em}
+
+/* Sidebar bottom actions */
+.s-actions{padding:14px 16px;border-top:1px solid var(--line);
+  display:flex;gap:10px;flex-shrink:0;background:rgba(0,0,0,.2)}
+.s-act{flex:1;padding:11px;border-radius:10px;
+  font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;
+  letter-spacing:.06em;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:all .2s}
+.s-act.pri{background:linear-gradient(135deg,var(--ox-hi),var(--ox-lo));
+  border:none;color:#fff;box-shadow:0 4px 14px rgba(232,97,26,.3)}
+.s-act.pri:hover{box-shadow:0 6px 22px rgba(232,97,26,.5);transform:translateY(-1px)}
+.s-act.sec{background:transparent;border:1px solid var(--line-ox);color:var(--tx2)}
+.s-act.sec:hover{background:var(--ox-wash);color:var(--ox);border-color:var(--ox-ring)}
+
+/* Scene tag */
+.scene-tag{font-family:var(--mono);font-size:10px;color:var(--tx3);
+  letter-spacing:.08em;padding:10px 12px;background:var(--glass);
+  border-radius:8px;border:1px solid var(--line);margin-bottom:16px;
+  text-transform:uppercase;line-height:1.6}
+
+/* Upload zone */
+.upload-zone{margin:0 16px 14px;border:1.5px dashed var(--line-ox);
+  border-radius:12px;padding:16px;text-align:center;cursor:pointer;
+  transition:border-color .2s,background .2s;flex-shrink:0}
+.upload-zone:hover{border-color:rgba(232,97,26,.5);background:var(--ox-wash)}
+.upload-zone p{font-size:12px;color:var(--tx2);margin-top:7px;line-height:1.5}
+.upload-zone code{font-size:10px;color:var(--tx3);font-family:var(--mono)}
+#file-inp{display:none}
+
+/* Toast */
+.toast{position:fixed;bottom:32px;left:50%;
+  transform:translateX(-50%) translateY(14px);
+  background:rgba(10,5,1,.97);border:1px solid var(--ox-ring);
+  border-radius:100px;padding:10px 22px;font-size:12px;color:var(--tx);
+  white-space:nowrap;z-index:9999;opacity:0;pointer-events:none;
+  backdrop-filter:blur(16px);
+  box-shadow:0 8px 30px rgba(0,0,0,.6),0 0 20px rgba(232,97,26,.12);
+  transition:opacity .3s,transform .3s}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Mobile */
+@media(max-width:860px){
+  .app{grid-template-columns:1fr;grid-template-rows:48px 1fr 340px}
+  .sidebar{border-left:none;border-top:1px solid var(--line-ox)}
+  .hud-tl,.hud-tr,.hud-br,.hud-bl{display:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ══ TOPBAR ══ -->
+<header class="topbar">
+  <div class="tb-left">
+    <button class="tb-back" onclick="goBack()" title="Back">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <svg class="tb-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="100" cy="100" r="60" fill="none" stroke="#E8611A" stroke-width="8" stroke-linecap="round"/>
+      <g transform="rotate(-54,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+      <g transform="rotate(18,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+      <g transform="rotate(90,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+      <g transform="rotate(162,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+      <g transform="rotate(234,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+      <circle cx="100" cy="100" r="7" fill="none" stroke="#E8611A" stroke-width="5"/>
+    </svg>
+    <span class="tb-brand">MISE AI</span>
+    <div class="tb-pipe"></div>
+    <span class="tb-sub">Food Vision</span>
+  </div>
+  <div class="tb-right">
+    <div class="tb-status">
+      <div class="status-dot" id="sdot"></div>
+      <span id="stxt">Idle</span>
+    </div>
+    <button class="tb-pill" id="grid-btn" onclick="toggleGrid()">Grid</button>
+    <button class="tb-pill" onclick="clearAll()">Clear</button>
+  </div>
+</header>
+
+<!-- ══ VIDEO ══ -->
+<div class="video-panel" id="vpanel">
+  <video id="cam-video" autoplay playsinline muted></video>
+  <canvas id="snap-canvas"></canvas>
+
+  <div class="no-cam" id="no-cam">
+    <div class="no-cam-ring">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    </div>
+    <h3>Food Vision</h3>
+    <p>Enable your camera or upload a food image to begin AI recognition</p>
+    <button class="no-cam-btn" onclick="startCam()">Enable Camera</button>
+  </div>
+
+  <div class="grid-ov" id="grid-ov"></div>
+
+  <div class="scan-ov">
+    <div class="brk tl" id="btl"></div><div class="brk tr" id="btr"></div>
+    <div class="brk bl" id="bbl"></div><div class="brk br" id="bbr"></div>
+    <div class="scan-line" id="sline"></div>
+  </div>
+
+  <div id="det-layer" style="position:absolute;inset:0;pointer-events:none"></div>
+
+  <div class="xhair-ring"></div>
+  <div class="xhair"></div>
+
+  <div class="hud-tl">MISE AI · VISION<br><span id="hres">—</span></div>
+  <div class="hud-tr"><span id="hfps">— FPS</span><br><span id="htime">——:——:——</span></div>
+  <div class="hud-br">FOOD RECOGNITION v2<br>NEURAL ENGINE READY</div>
+  <div class="hud-bl" id="hlast"></div>
+
+  <div class="cam-bar">
+    <button class="cb-btn" onclick="startCam()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      Camera
+    </button>
+    <button class="cb-main" id="main-btn" onclick="doScan()">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </button>
+    <button class="cb-btn" onclick="document.getElementById('file-inp').click()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload
+    </button>
+  </div>
+</div>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="s-tabs">
+    <button class="s-tab on" id="tab-btn-analysis" onclick="showTab('analysis')">Analysis</button>
+    <button class="s-tab" id="tab-btn-recipe"   onclick="showTab('recipe')">Recipe</button>
+    <button class="s-tab" id="tab-btn-history"  onclick="showTab('history')">History</button>
+  </div>
+
+  <!-- Analysis -->
+  <div class="tab-pane on" id="tab-analysis">
+    <div class="s-scroll" id="analysis-scroll">
+      <div class="state-idle" id="st-idle">
+        <div class="idle-ring">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <p>Point camera at food and press the scan button — or upload an image</p>
+        <code>// AWAITING SCAN</code>
+      </div>
+      <div class="state-busy" id="st-busy" style="display:none;height:100%">
+        <div class="busy-ring"></div>
+        <div class="busy-label">Analysing</div>
+        <div class="busy-step" id="busy-step">DETECTING FOOD</div>
+      </div>
+      <div class="state-result" id="st-result" style="display:none"></div>
+    </div>
+    <div class="s-actions" id="s-actions" style="display:none">
+      <button class="s-act sec" onclick="resetView()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>Reset
+      </button>
+      <button class="s-act pri" onclick="showTab('recipe')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Recipe
+      </button>
+    </div>
+  </div>
+
+  <!-- Recipe -->
+  <div class="tab-pane" id="tab-recipe">
+    <div class="s-scroll" id="recipe-scroll">
+      <div class="state-idle" id="ri-idle">
+        <div class="idle-ring">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
+        <p>Recipe will appear after food is identified</p>
+        <code>// AWAITING ANALYSIS</code>
+      </div>
+      <div id="recipe-out" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="tab-pane" id="tab-history">
+    <div class="h-scroll" id="hist-list">
+      <div class="h-empty" id="h-empty">
+        <p>No scans yet</p>
+        <code>// SCAN FOOD TO BUILD HISTORY</code>
+      </div>
+    </div>
+  </div>
+</aside>
+</div>
+
+<input type="file" id="file-inp" accept="image/*" onchange="handleFile(event)">
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+let camStream = null, busy = false, gridOn = false;
+let scanHistory = [], lastResult = null;
+let fpsCount = 0;
+
+const vid    = document.getElementById('cam-video');
+const canvas = document.getElementById('snap-canvas');
+const noCam  = document.getElementById('no-cam');
+const sdot   = document.getElementById('sdot');
+const stxt   = document.getElementById('stxt');
+const sline  = document.getElementById('sline');
+const detL   = document.getElementById('det-layer');
+const mainBtn= document.getElementById('main-btn');
+
+// ─── HUD clock ───
+setInterval(() => {
+  document.getElementById('htime').textContent = new Date().toTimeString().slice(0,8);
+}, 1000);
+setInterval(() => {
+  document.getElementById('hfps').textContent = camStream ? fpsCount + ' FPS' : '— FPS';
+  fpsCount = 0;
+}, 1000);
+vid.addEventListener('timeupdate', () => fpsCount++);
+
+// ─── Status ───
+function setStatus(s) {
+  sdot.className = 'status-dot ' + s;
+  stxt.textContent = s === 'live' ? 'Live' : s === 'scanning' ? 'Scanning' : s === 'error' ? 'Error' : 'Idle';
+}
+
+// ═══════════════════════════════════════════
+//  CAMERA
+// ═══════════════════════════════════════════
+async function startCam() {
+  // ── Pre-flight checks ──────────────────────
+  // 1. Must be on localhost or https
+  const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  if (!isSecure) {
+    showCamError(
+      'Insecure origin',
+      'Camera only works on http://localhost or https://.\n\nYou are on: ' + location.href + '\n\nFix: run server.py and open http://localhost:5000'
+    );
+    return;
+  }
+
+  // 2. getUserMedia must exist
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showCamError(
+      'Browser not supported',
+      'Your browser does not support camera access.\n\nTry: Chrome, Edge, or Firefox (latest version).'
+    );
+    return;
+  }
+
+  // ── Check permission state first ───────────
+  try {
+    const perm = await navigator.permissions.query({ name: 'camera' });
+    if (perm.state === 'denied') {
+      showCamError(
+        'Camera permission blocked',
+        'Camera access is blocked in your browser.\n\nTo fix:\n1. Click the 🔒 lock icon in your browser address bar\n2. Set Camera to "Allow"\n3. Refresh the page'
+      );
+      return;
+    }
+  } catch(e) { /* permissions API not available in all browsers — continue */ }
+
+  // ── Request camera ──────────────────────────
+  try {
+    if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+
+    // Try basic video first — most compatible
+    camStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+
+    vid.srcObject = camStream;
+
+    await new Promise((resolve, reject) => {
+      vid.onloadedmetadata = () => { vid.play().then(resolve).catch(reject); };
+      vid.onerror = reject;
+      setTimeout(() => reject(new Error('Video load timeout')), 10000);
+    });
+
+    noCam.style.display = 'none';
+    canvas.style.display = 'none';
+    vid.style.opacity = '1';
+    setStatus('live');
+    const s = camStream.getVideoTracks()[0].getSettings();
+    document.getElementById('hres').textContent = (s.width||'—') + '×' + (s.height||'—');
+    toast('📷 Camera active');
+
+  } catch(err) {
+    camStream = null;
+    setStatus('error');
+    console.error('Camera error:', err.name, err.message);
+
+    // Show specific fix for each error type
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      showCamError(
+        'Permission Denied (NotAllowedError)',
+        'You denied camera access, or the browser blocked it.\n\nTo fix:\n1. Click the 🔒 lock/camera icon in the address bar\n2. Change Camera from "Blocked" to "Allow"\n3. Click the Camera button again\n\nOR in Chrome: go to Settings → Privacy → Camera → allow localhost'
+      );
+    } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+      showCamError(
+        'No Camera Found (NotFoundError)',
+        'No camera device was detected.\n\nCheck:\n• Is a webcam plugged in?\n• Is the camera driver installed?\n• Try another browser (Chrome recommended)'
+      );
+    } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+      showCamError(
+        'Camera In Use (NotReadableError)',
+        'Your camera is already being used by another app.\n\nClose apps like Zoom, Teams, Skype, or other browser tabs using the camera, then try again.'
+      );
+    } else if (err.name === 'OverconstrainedError') {
+      showCamError('Camera Constraints Error', 'Camera could not match the requested settings. Try using the Upload button instead.');
+    } else {
+      showCamError(err.name || 'Camera Error', err.message || 'Unknown error. Check browser console (F12) for details.');
+    }
+  }
+}
+
+function showCamError(title, message) {
+  // Update no-cam panel with a specific error message
+  noCam.style.display = 'flex';
+  noCam.innerHTML = `
+    <div class="no-cam-ring" style="border-color:rgba(255,82,82,.4);background:rgba(255,82,82,.05)">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ff5252" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <h3 style="color:#ff5252;font-size:16px">${title}</h3>
+    <p style="white-space:pre-line;font-size:12px;max-width:300px;text-align:left;background:rgba(255,82,82,.07);border:1px solid rgba(255,82,82,.2);padding:12px 14px;border-radius:10px;line-height:1.7">${message}</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+      <button class="no-cam-btn" onclick="startCam()">Try Again</button>
+      <button class="no-cam-btn" style="background:transparent;border:1px solid rgba(232,97,26,.4);color:var(--ox)" onclick="document.getElementById('file-inp').click()">Upload Image Instead</button>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════
+//  CAPTURE FRAME → base64
+// ═══════════════════════════════════════════
+function captureFrame() {
+  if (camStream && vid.readyState >= 2 && vid.videoWidth > 0) {
+    // Live camera — draw current video frame
+    canvas.width  = vid.videoWidth;
+    canvas.height = vid.videoHeight;
+    canvas.getContext('2d').drawImage(vid, 0, 0);
+  }
+  // Guard: no valid frame
+  if (!canvas.width || !canvas.height) return null;
+  return canvas.toDataURL('image/jpeg', 0.88).split(',')[1];
+}
+
+// ═══════════════════════════════════════════
+//  SCAN ANIMATIONS
+// ═══════════════════════════════════════════
+function startAnim() {
+  sline.classList.add('on');
+  ['btl','btr','bbl','bbr'].forEach(id => document.getElementById(id).classList.add('active'));
+  mainBtn.classList.add('busy');
+  setStatus('scanning');
+}
+function stopAnim() {
+  sline.classList.remove('on');
+  ['btl','btr','bbl','bbr'].forEach(id => document.getElementById(id).classList.remove('active'));
+  mainBtn.classList.remove('busy');
+}
+
+// ═══════════════════════════════════════════
+//  MAIN SCAN TRIGGER
+// ═══════════════════════════════════════════
+async function doScan() {
+  if (busy) return;
+  // Allow scan if camera is live OR if an uploaded image is showing
+  const hasUpload = canvas.style.display !== 'none' && canvas.width > 0;
+  if (!camStream && !hasUpload) {
+    toast('⚠ Enable camera or upload a food image first');
+    return;
+  }
+  // BUG FIX: Guard against capturing an empty canvas (0x0) before the
+  // video frame is ready — avoids sending blank images to the API.
+  if (camStream && (vid.readyState < 2 || vid.videoWidth === 0)) {
+    toast('⚠ Camera not ready yet — wait a moment and try again');
+    return;
+  }
+  busy = true;
+
+  // Flash
+  const fl = document.createElement('div'); fl.className = 'flash';
+  document.getElementById('vpanel').appendChild(fl);
+  setTimeout(() => fl.remove(), 400);
+
+  startAnim();
+  setAnalysisState('busy');
+
+  const b64 = captureFrame();
+  if (!b64) {
+    busy = false;
+    stopAnim();
+    setStatus('idle');
+    toast('⚠ Could not capture image — try again');
+    setAnalysisState('idle');
+    return;
+  }
+  await runAnalysis(b64, 'image/jpeg');
+
+  busy = false;
+  stopAnim();
+  setStatus(camStream ? 'live' : 'idle');
+}
+
+// ═══════════════════════════════════════════
+//  FILE UPLOAD
+// ═══════════════════════════════════════════
+function handleFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const src  = ev.target.result;
+    const mime = file.type || 'image/jpeg';
+    const b64  = src.split(',')[1];
+
+    const img = new Image();
+    img.onload = async () => {
+      // Draw uploaded image into canvas at its natural size
+      canvas.width  = img.naturalWidth  || 1280;
+      canvas.height = img.naturalHeight || 720;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+
+      // Show canvas — set properties individually to preserve position:absolute from CSS
+      canvas.style.display    = 'block';
+      canvas.style.zIndex     = '1';
+      noCam.style.display     = 'none';
+      // Hide live video behind canvas
+      vid.style.opacity = '0';
+
+      // Now safe to scan — image is drawn
+      if (!busy) {
+        busy = true;
+        startAnim();
+        setAnalysisState('busy');
+        await runAnalysis(b64, mime);
+        busy = false;
+        stopAnim();
+        setStatus('idle');
+      }
+    };
+    img.onerror = () => toast('⚠ Could not load image file');
+    img.src = src;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ═══════════════════════════════════════════
+//  GEMINI VISION API
+// ═══════════════════════════════════════════
+async function runAnalysis(b64, mime) {
+  const steps = ['DETECTING FOOD','CLASSIFYING ITEMS','ANALYSING NUTRITION','BUILDING RESULTS'];
+  let si = 0;
+  const stepEl = document.getElementById('busy-step');
+  const ticker = setInterval(() => { si=(si+1)%steps.length; stepEl.textContent=steps[si]; }, 700);
+
+  try {
+    // Calls the local Python proxy server (server.py)
+    // Run: python server.py   →  open http://localhost:5000
+    const resp = await fetch('/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: b64, mime: mime })
+    });
+
+    clearInterval(ticker);
+
+    if (resp.status === 401) {
+      const body = await resp.json().catch(() => ({}));
+      toast('⚠ No API key — open server.py and replace PASTE_YOUR_KEY_HERE with your AIza... key');
+      console.error('401 detail:', body.error || 'No API key set');
+      setAnalysisState('idle');
+      return;
+    }
+
+    if (!resp.ok) {
+      const err = await resp.text();
+      console.error('API error:', resp.status, err);
+      toast('⚠ Server error ' + resp.status + ' — check your terminal for details');
+      setAnalysisState('idle');
+      return;
+    }
+
+    // Proxy returns the result object directly (already parsed JSON)
+    const result = await resp.json();
+
+    if (result.error) {
+      console.error('Server error:', result.error);
+      toast('⚠ Server error — check console');
+      setAnalysisState('idle');
+      return;
+    }
+
+    lastResult = result;
+
+    if (!result.detected) {
+      setAnalysisState('idle');
+      toast('⚠ ' + (result.message || 'No food detected'));
+      return;
+    }
+
+    drawBoxes(result.foods);
+    renderAnalysis(result);
+    renderRecipe(result);
+    addToHistory(result, b64, mime);
+    document.getElementById('hlast').textContent = 'LAST: ' + (result.foods[0]?.name || '').toUpperCase();
+
+  } catch(err) {
+    clearInterval(ticker);
+    console.error('Analysis error:', err);
+    if (err.message && err.message.includes('fetch')) {
+      toast('⚠ Server not running — open terminal and run: python server.py');
+    } else {
+      toast('⚠ Error: ' + (err.message || 'check console'));
+    }
+    setAnalysisState('idle');
+  }
+}
+
+// ═══════════════════════════════════════════
+//  DRAW DETECTION BOXES
+// ═══════════════════════════════════════════
+function drawBoxes(foods) {
+  detL.innerHTML = '';
+  const vp = document.getElementById('vpanel');
+  const W = vp.offsetWidth, H = vp.offsetHeight;
+
+  foods.forEach(f => {
+    if (!f.box) return;
+    const bx = document.createElement('div');
+    bx.className = 'det-box';
+    const x = (f.box.x / 100) * W;
+    const y = (f.box.y / 100) * H;
+    const w = (f.box.w / 100) * W;
+    const h = (f.box.h / 100) * H;
+    bx.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
+
+    const lbl = document.createElement('div');
+    lbl.className = 'det-lbl';
+    lbl.textContent = f.name;
+    bx.appendChild(lbl);
+
+    const conf = document.createElement('div');
+    conf.className = 'det-conf';
+    conf.textContent = f.confidence + '%';
+    bx.appendChild(conf);
+
+    detL.appendChild(bx);
+  });
+  setTimeout(() => { detL.innerHTML = ''; }, 10000);
+}
+
+// ═══════════════════════════════════════════
+//  RENDER ANALYSIS
+// ═══════════════════════════════════════════
+function renderAnalysis(r) {
+  let html = '';
+  if (r.scene) html += `<div class="scene-tag">🔍 ${r.scene}</div>`;
+
+  r.foods.forEach(f => {
+    // Estimate macro bar widths (protein/carbs/fat each out of 60g max)
+    const pw = Math.min(100, parseFloat(f.macros?.protein||0)/60*100);
+    const cw = Math.min(100, parseFloat(f.macros?.carbs||0)/80*100);
+    const fw = Math.min(100, parseFloat(f.macros?.fat||0)/40*100);
+
+    html += `<div class="food-card">
+      <div class="fc-head">
+        <div class="fc-name">${f.name}</div>
+        <div class="fc-badge">${f.confidence}%</div>
+      </div>
+      <div class="fc-body">
+        <div class="fc-meta">
+          ${f.cuisine ? `<span class="fc-tag hi">${f.cuisine}</span>` : ''}
+          ${f.calories_per_100g ? `<span class="fc-tag hi">${f.calories_per_100g} kcal</span>` : ''}
+        </div>
+        ${f.description ? `<div class="fc-desc">${f.description}</div>` : ''}
+
+        ${f.macros ? `
+        <div class="sec-lbl">Macronutrients</div>
+        <div class="macro-row">
+          <div class="macro-item">
+            <span class="macro-name">Protein</span>
+            <div class="macro-bar-bg"><div class="macro-bar-fill" style="width:${pw}%"></div></div>
+            <span class="macro-val">${f.macros.protein||'—'}</span>
+          </div>
+          <div class="macro-item">
+            <span class="macro-name">Carbs</span>
+            <div class="macro-bar-bg"><div class="macro-bar-fill" style="width:${cw}%;background:linear-gradient(90deg,#7a4200,var(--ox-hi))"></div></div>
+            <span class="macro-val">${f.macros.carbs||'—'}</span>
+          </div>
+          <div class="macro-item">
+            <span class="macro-name">Fat</span>
+            <div class="macro-bar-bg"><div class="macro-bar-fill" style="width:${fw}%;background:linear-gradient(90deg,#3a2000,#c85010)"></div></div>
+            <span class="macro-val">${f.macros.fat||'—'}</span>
+          </div>
+          ${f.macros.fiber ? `<div class="macro-item">
+            <span class="macro-name">Fiber</span>
+            <div class="macro-bar-bg"><div class="macro-bar-fill" style="width:${Math.min(100,parseFloat(f.macros.fiber)/20*100)}%;background:linear-gradient(90deg,#1a4020,#52d97a)"></div></div>
+            <span class="macro-val">${f.macros.fiber}</span>
+          </div>` : ''}
+        </div>` : ''}
+
+        ${f.key_nutrients?.length ? `
+        <div class="sec-lbl">Nutrients</div>
+        <div class="pill-row">${f.key_nutrients.map(n=>`<span class="pill">${n}</span>`).join('')}</div>` : ''}
+
+        ${f.ingredients?.length ? `
+        <div class="sec-lbl">Ingredients</div>
+        ${f.ingredients.map(i=>`<div class="ing-item"><div class="ing-dot"></div>${i}</div>`).join('')}` : ''}
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('st-result').innerHTML = html;
+  setAnalysisState('result');
+  document.getElementById('s-actions').style.display = 'flex';
+}
+
+// ═══════════════════════════════════════════
+//  RENDER RECIPE
+// ═══════════════════════════════════════════
+function renderRecipe(r) {
+  if (!r.recipe_title) return;
+  const f = r.foods?.[0] || {};
+  let html = `<div style="padding:2px 2px 20px">
+    <div style="font-family:var(--mono);font-size:10px;color:var(--tx3);letter-spacing:.12em;margin-bottom:8px">SUGGESTED RECIPE</div>
+    <div class="fc-name" style="font-size:24px;margin-bottom:12px">${r.recipe_title}</div>
+    <div class="fc-meta">
+      ${r.cooking_time?`<span class="fc-tag hi">⏱ ${r.cooking_time}</span>`:''}
+      ${r.difficulty?`<span class="fc-tag">${r.difficulty}</span>`:''}
+      ${f.cuisine?`<span class="fc-tag">${f.cuisine}</span>`:''}
+    </div>`;
+
+  if (r.recipe_steps?.length) {
+    html += `<div class="sec-lbl" style="margin-top:18px">Instructions</div>`;
+    r.recipe_steps.forEach((s,i) => {
+      html += `<div class="step"><div class="step-n">0${i+1}</div><div>${s}</div></div>`;
+    });
+  }
+  if (f.ingredients?.length) {
+    html += `<div class="sec-lbl" style="margin-top:16px">Ingredients</div>`;
+    f.ingredients.forEach(i => { html += `<div class="ing-item"><div class="ing-dot"></div>${i}</div>`; });
+  }
+  html += '</div>';
+
+  document.getElementById('recipe-out').innerHTML = html;
+  document.getElementById('ri-idle').style.display = 'none';
+  document.getElementById('recipe-out').style.display = 'block';
+}
+
+// ═══════════════════════════════════════════
+//  HISTORY
+// ═══════════════════════════════════════════
+function addToHistory(r, b64, mime) {
+  const f = r.foods?.[0]; if (!f) return;
+
+  // Make a tiny 80x80 thumbnail from the current canvas
+  let thumbSrc = '🍽';
+  try {
+    const tc = document.createElement('canvas');
+    tc.width = 80; tc.height = 80;
+    tc.getContext('2d').drawImage(canvas, 0, 0, 80, 80);
+    thumbSrc = tc.toDataURL('image/jpeg', 0.6);
+  } catch(e) {}
+
+  const timeStr = new Date().toLocaleTimeString();
+  scanHistory.unshift({ name: f.name, time: timeStr, result: r });
+
+  const empty = document.getElementById('h-empty');
+  if (empty) empty.style.display = 'none';
+
+  const list = document.getElementById('hist-list');
+  const div = document.createElement('div');
+  div.className = 'h-item';
+  const thumbHTML = thumbSrc.startsWith('data:')
+    ? `<div class="h-thumb"><img src="${thumbSrc}" alt=""/></div>`
+    : `<div class="h-thumb">${thumbSrc}</div>`;
+  div.innerHTML = `${thumbHTML}
+    <div class="h-info">
+      <div class="h-name">${f.name}</div>
+      <div class="h-time">${timeStr}</div>
+    </div>`;
+  div.onclick = () => { lastResult=r; renderAnalysis(r); renderRecipe(r); showTab('analysis'); };
+  // Insert after the empty placeholder (first child)
+  list.insertBefore(div, list.firstChild);
+}
+
+// ═══════════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════════
+function setAnalysisState(s) {
+  document.getElementById('st-idle').style.display  = s==='idle'   ? '' : 'none';
+  document.getElementById('st-busy').style.display  = s==='busy'   ? 'flex' : 'none';
+  document.getElementById('st-result').style.display= s==='result' ? '' : 'none';
+  if (s !== 'result') document.getElementById('s-actions').style.display = 'none';
+}
+
+function showTab(name) {
+  ['analysis','recipe','history'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('on', t===name);
+    document.getElementById('tab-btn-'+t).classList.toggle('on', t===name);
+  });
+}
+
+function toggleGrid() {
+  gridOn = !gridOn;
+  document.getElementById('grid-ov').classList.toggle('on', gridOn);
+  document.getElementById('grid-btn').classList.toggle('active', gridOn);
+}
+
+function resetView() {
+  setAnalysisState('idle');
+  detL.innerHTML = '';
+  lastResult = null;
+  document.getElementById('recipe-out').style.display = 'none';
+  document.getElementById('ri-idle').style.display = '';
+  document.getElementById('hlast').textContent = '';
+}
+
+function clearAll() {
+  resetView();
+
+  // Remove uploaded image — reset canvas and show no-cam placeholder
+  canvas.style.display = 'none';
+  canvas.style.zIndex  = '';
+  canvas.width = 0; canvas.height = 0;
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  vid.style.opacity = '1';
+
+  // If no live camera, show the no-cam placeholder again
+  if (!camStream) {
+    noCam.style.display = 'flex';
+  }
+
+  // Clear detection boxes
+  detL.innerHTML = '';
+
+  // Clear history list
+  scanHistory = [];
+  const list = document.getElementById('hist-list');
+  list.innerHTML = `<div class="h-empty" id="h-empty"><p>No scans yet</p><code>// SCAN FOOD TO BUILD HISTORY</code></div>`;
+
+  setStatus('idle');
+  toast('✓ Cleared');
+}
+
+function goBack() {
+  // Stop camera stream before leaving
+  if (camStream) {
+    camStream.getTracks().forEach(t => t.stop());
+    camStream = null;
+  }
+  // Navigate back to previous page in history, or fall back to auth page
+  if (document.referrer && document.referrer !== window.location.href) {
+    window.history.back();
+  } else {
+    window.location.href = 'mise_ai_auth_v2.html';
+  }
+}
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('on'), 3000);
+}
+
+// ─── Auto-start camera ───
+window.addEventListener('load', () => {
+  setStatus('idle');
+  startCam().catch(() => {});
+});
+
+// ─── Enter key ───
+document.addEventListener('keydown', e => {
+  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); doScan(); }
+});
+</script>
+</body>
+</html>

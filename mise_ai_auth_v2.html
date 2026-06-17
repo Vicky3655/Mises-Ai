@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mise AI </title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   RESET
+═══════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+button { font-family: inherit; cursor: pointer; }
+input  { font-family: inherit; }
+
+:root {
+  --ox:        #E8611A;
+  --ox-hi:     #FF7C38;
+  --ox-lo:     #A84410;
+  --ox-glow:   rgba(232,97,26,.55);
+  --ox-ring:   rgba(232,97,26,.22);
+  --ox-wash:   rgba(232,97,26,.07);
+  --bg:        #07040200;
+  --panel:     rgba(12,7,3,.88);
+  --glass:     rgba(255,255,255,.03);
+  --line:      rgba(255,255,255,.07);
+  --line-ox:   rgba(232,97,26,.20);
+  --tx:        #F4E3D0;
+  --tx2:       rgba(244,227,208,.55);
+  --tx3:       rgba(244,227,208,.28);
+  --err:       #ff5252;
+  --ok:        #52d97a;
+  --r:         16px;
+}
+
+html {
+  height: 100%;
+  background: #060300;
+}
+
+body {
+  min-height: 100%;
+  background: #060300;
+  color: var(--tx);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ═══════════════════════════════════════════
+   CANVAS BG
+═══════════════════════════════════════════ */
+#canvas-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════
+   LAYOUT SHELL
+═══════════════════════════════════════════ */
+.shell {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  display: flex;
+  align-items: stretch;
+}
+
+/* ───── LEFT PANEL (desktop only) ───── */
+.left-panel {
+  display: none;
+  flex: 0 0 46%;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 52px 56px;
+  position: relative;
+  overflow: hidden;
+  border-right: 1px solid var(--line-ox);
+}
+
+.left-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 30% 40%, rgba(200,65,10,.22) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 50% at 80% 80%, rgba(160,45,5,.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.left-brand {
+  position: relative; z-index: 2;
+}
+.left-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 20px;
+}
+.left-logo-svg {
+  width: 44px; height: 44px;
+  filter: drop-shadow(0 0 10px var(--ox-glow));
+  animation: breathe 5s ease-in-out infinite;
+}
+.left-logo-row img{
+  width: 120px; height: auto;
+}
+@keyframes breathe {
+  0%,100% { filter: drop-shadow(0 0 10px var(--ox-glow)) drop-shadow(0 0 22px rgba(232,97,26,.25)); }
+  50%      { filter: drop-shadow(0 0 18px #FF7C38cc) drop-shadow(0 0 40px var(--ox-glow)); }
+}
+
+
+.left-tagline {
+  font-size: 13px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--tx3);
+  margin-bottom: 52px;
+}
+
+.left-headline {
+  font-family: 'Quicksand', sans-serif;
+  font-size: clamp(32px, 3.5vw, 46px);
+  font-weight: 300;
+  font-style: italic;
+  line-height: 1.3;
+  color: var(--tx);
+  margin-bottom: 20px;
+}
+.left-headline em {
+  font-style: normal;
+  color: var(--ox);
+  text-shadow: 0 0 20px var(--ox-glow);
+}
+.left-desc {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--tx2);
+  max-width: 340px;
+}
+
+.left-features {
+  position: relative; z-index: 2;
+  margin-top: 52px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.feat-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.feat-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--ox);
+  margin-top: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px var(--ox-glow);
+}
+.feat-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--tx2);
+}
+.feat-text strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--tx);
+  margin-bottom: 2px;
+}
+
+.left-footer {
+  position: relative; z-index: 2;
+  font-size: 11px;
+  color: var(--tx3);
+  letter-spacing: .06em;
+}
+
+/* ───── RIGHT PANEL ───── */
+.right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* Mobile-only brand */
+.mobile-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 36px;
+}
+.mobile-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.mobile-logo-svg {
+  width: 38px; height: 38px;
+  filter: drop-shadow(0 0 10px var(--ox-glow));
+  animation: breathe 5s ease-in-out infinite;
+}
+.mobile-logo-row img{
+  width: 100px; height: auto;
+  
+}
+.mobile-tagline {
+  font-size: 10px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--tx3);
+}
+
+/* ═══════════════════════════════════════════
+   CARD
+═══════════════════════════════════════════ */
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--panel);
+  border: 1px solid var(--line-ox);
+  border-radius: 24px;
+  padding: 36px 32px;
+  backdrop-filter: blur(24px);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.03) inset,
+    0 2px 0 rgba(232,97,26,.08) inset,
+    0 20px 60px rgba(0,0,0,.55),
+    0 0 80px rgba(232,97,26,.04);
+  position: relative;
+  overflow: hidden;
+}
+.auth-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(232,97,26,.35) 50%, transparent 100%);
+}
+
+/* Page visibility */
+.auth-page { display: none; }
+.auth-page.active { display: block; }
+
+/* ─── Card Header ─── */
+.card-eyebrow {
+  font-size: 10px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--ox);
+  margin-bottom: 8px;
+  opacity: .8;
+}
+.card-title {
+  font-family: 'Quicksand', sans-serif;
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--tx);
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+.card-sub {
+  font-size: 13px;
+  color: var(--tx2);
+  margin-bottom: 28px;
+  line-height: 1.55;
+}
+
+/* ─── Fields ─── */
+.field { margin-bottom: 18px; }
+
+.field label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--tx3);
+  margin-bottom: 8px;
+}
+.label-action {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: .04em;
+  text-transform: none;
+  color: var(--ox);
+  background: none;
+  border: none;
+  padding: 0;
+  transition: opacity .2s, text-shadow .2s;
+}
+.label-action:hover { opacity: .75; text-shadow: 0 0 10px var(--ox-glow); }
+
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.i-icon {
+  position: absolute;
+  left: 15px;
+  color: var(--tx3);
+  display: flex;
+  pointer-events: none;
+  transition: color .25s;
+}
+.input-wrap:focus-within .i-icon { color: var(--ox); }
+
+.input-wrap input {
+  width: 100%;
+  background: rgba(255,255,255,.035);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 44px 14px 42px;
+  font-size: 14px;
+  color: var(--tx);
+  outline: none;
+  transition: border-color .25s, background .25s, box-shadow .25s;
+  caret-color: var(--ox);
+  letter-spacing: .02em;
+}
+.input-wrap input::placeholder { color: var(--tx3); }
+.input-wrap input:focus {
+  border-color: var(--ox-ring);
+  background: rgba(232,97,26,.04);
+  box-shadow: 0 0 0 3px rgba(232,97,26,.08), 0 2px 8px rgba(0,0,0,.3);
+}
+.has-error .input-wrap input {
+  border-color: rgba(255,82,82,.4);
+  box-shadow: 0 0 0 3px rgba(255,82,82,.08);
+}
+.err-msg {
+  font-size: 11px;
+  color: var(--err);
+  margin-top: 5px;
+  padding-left: 2px;
+  display: none;
+}
+.has-error .err-msg { display: block; }
+
+.eye-btn {
+  position: absolute;
+  right: 13px;
+  background: none;
+  border: none;
+  padding: 4px;
+  color: var(--tx3);
+  display: flex;
+  transition: color .2s;
+}
+.eye-btn:hover { color: var(--ox); }
+
+/* Strength */
+.strength-track {
+  display: flex; gap: 4px;
+  margin-top: 7px;
+}
+.s-seg {
+  flex: 1; height: 3px;
+  border-radius: 3px;
+  background: rgba(255,255,255,.07);
+  transition: background .35s;
+}
+.s-seg.w { background: #ff5252; }
+.s-seg.f { background: #ffaa00; }
+.s-seg.g { background: var(--ok); }
+.s-seg.s { background: var(--ox); }
+
+/* ─── Check row ─── */
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 4px 0 22px;
+}
+.check-row input[type="checkbox"] {
+  width: 15px; height: 15px;
+  accent-color: var(--ox);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.check-row span {
+  font-size: 12px;
+  color: var(--tx2);
+  line-height: 1.55;
+}
+.inline-link {
+  color: var(--ox);
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  transition: opacity .2s;
+  font-family: inherit;
+}
+.inline-link:hover { opacity: .75; }
+
+/* ─── Divider ─── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0;
+  font-size: 11px;
+  letter-spacing: .1em;
+  color: var(--tx3);
+}
+.divider::before, .divider::after {
+  content: '';
+  flex: 1; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line), transparent);
+}
+
+/* ─── Buttons ─── */
+.btn-primary {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--ox-hi) 0%, var(--ox) 50%, var(--ox-lo) 100%);
+  background-size: 200% 200%;
+  background-position: 0% 50%;
+  color: #fff;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  position: relative;
+  overflow: hidden;
+  transition: transform .15s, box-shadow .2s, background-position .4s;
+  box-shadow: 0 4px 20px rgba(232,97,26,.38), 0 1px 0 rgba(255,255,255,.12) inset;
+}
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.12) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity .2s;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(232,97,26,.5), 0 1px 0 rgba(255,255,255,.12) inset;
+  background-position: 100% 50%;
+}
+.btn-primary:hover::after { opacity: 1; }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary.loading {
+  pointer-events: none;
+  opacity: .75;
+}
+.btn-primary.loading .btn-label { opacity: 0; }
+.btn-primary.loading::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 20px; height: 20px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  transform: translate(-50%,-50%);
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
+
+.btn-ghost {
+  width: 100%;
+  padding: 14px;
+  background: transparent;
+  border: 1px solid var(--ox-ring);
+  border-radius: 12px;
+  color: var(--ox);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  transition: background .2s, border-color .2s, transform .15s, box-shadow .2s;
+}
+.btn-ghost:hover {
+  background: var(--ox-wash);
+  border-color: rgba(232,97,26,.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(232,97,26,.15);
+}
+
+.btn-social {
+  width: 100%;
+  padding: 13px 18px;
+  background: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--tx);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: .03em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  transition: background .2s, border-color .2s, transform .15s;
+}
+.btn-social:hover {
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.15);
+  transform: translateY(-1px);
+}
+
+/* ─── Switch row ─── */
+.switch-row {
+  text-align: center;
+  font-size: 13px;
+  color: var(--tx2);
+  margin-top: 24px;
+}
+.switch-btn {
+  color: var(--ox);
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: text-shadow .2s, opacity .2s;
+}
+.switch-btn:hover { text-shadow: 0 0 10px var(--ox-glow); opacity: .85; }
+
+/* ─── Back btn ─── */
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: var(--tx2);
+  font-size: 12px;
+  letter-spacing: .06em;
+  margin-bottom: 26px;
+  padding: 0;
+  transition: color .2s;
+}
+.back-btn:hover { color: var(--ox); }
+.back-btn svg { transition: transform .2s; }
+.back-btn:hover svg { transform: translateX(-3px); }
+
+/* ─── Success state ─── */
+.success-wrap {
+  text-align: center;
+  padding: 10px 0;
+  display: none;
+}
+.success-wrap.show { display: block; }
+.success-ring {
+  width: 68px; height: 68px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(82,217,122,.3);
+  background: rgba(82,217,122,.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 22px;
+  animation: pop .5s cubic-bezier(.175,.885,.32,1.275) both;
+}
+@keyframes pop {
+  from { opacity: 0; transform: scale(.5); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ─── Toast ─── */
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: rgba(14,8,3,.96);
+  border: 1px solid var(--ox-ring);
+  border-radius: 100px;
+  padding: 10px 22px;
+  font-size: 13px;
+  color: var(--tx);
+  white-space: nowrap;
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  backdrop-filter: blur(12px);
+  transition: opacity .3s, transform .3s;
+  box-shadow: 0 8px 30px rgba(0,0,0,.5), 0 0 20px rgba(232,97,26,.1);
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+@media (min-width: 860px) {
+  .left-panel   { display: flex; }
+  .mobile-brand { display: none; }
+  .right-panel  { padding: 48px 52px; }
+}
+
+@media (max-width: 859px) {
+  .right-panel {
+    justify-content: flex-start;
+    padding-top: 48px;
+  }
+  .auth-card {
+    padding: 28px 22px;
+    border-radius: 20px;
+  }
+}
+
+@media (max-width: 420px) {
+  .auth-card { padding: 24px 18px; }
+  .card-title { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Animated canvas background -->
+<canvas id="canvas-bg"></canvas>
+
+<div class="shell">
+
+  <!-- ════════ LEFT PANEL ════════ -->
+  <div class="left-panel">
+    <div class="left-brand">
+      <div class="left-logo-row">
+        <!-- Citrus SVG logo -->
+        <svg class="left-logo-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="100" cy="100" r="60" fill="none" stroke="#E8611A" stroke-width="7" stroke-linecap="round"/>
+          <g transform="rotate(-54,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <g transform="rotate(18,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <g transform="rotate(90,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <g transform="rotate(162,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <g transform="rotate(234,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <circle cx="100" cy="100" r="7" fill="none" stroke="#E8611A" stroke-width="4.5"/>
+          <line x1="96" y1="51" x2="104" y2="51" stroke="#E8611A" stroke-width="4" stroke-linecap="round"/>
+          <line x1="145" y1="76" x2="149" y2="69" stroke="#E8611A" stroke-width="4" stroke-linecap="round"/>
+          <line x1="140" y1="136" x2="145" y2="143" stroke="#E8611A" stroke-width="4" stroke-linecap="round"/>
+          <line x1="60" y1="136" x2="55" y2="143" stroke="#E8611A" stroke-width="4" stroke-linecap="round"/>
+          <line x1="55" y1="76" x2="51" y2="69" stroke="#E8611A" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+        <span><img src="image.png" alt="Logo" ></span>
+      </div>
+      <div class="left-tagline">Culinary Intelligence Platform</div>
+
+      <h1 class="left-headline">
+        Cook smarter<br>with <em>AI</em> at your<br>side
+      </h1>
+      <p class="left-desc">
+        Your personal sous-chef that knows every ingredient, technique, and flavour pairing in the world — available every time you step into the kitchen.
+      </p>
+
+      <div class="left-features">
+        <div class="feat-item">
+          <div class="feat-dot"></div>
+          <div class="feat-text">
+            <strong>Smart Recipe Generation</strong>
+            Tell Mise AI what's in your fridge and it builds a full recipe, step by step.
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-dot"></div>
+          <div class="feat-text">
+            <strong>Voice-Guided Cooking</strong>
+            Hands-free mode reads instructions aloud while you cook.
+          </div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-dot"></div>
+          <div class="feat-text">
+            <strong>Nutrition & Substitutions</strong>
+            Instant swaps for allergies, diets, and pantry gaps.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="left-footer">© 2026 Mise AI · All rights reserved</div>
+  </div>
+
+  <!-- ════════ RIGHT PANEL ════════ -->
+  <div class="right-panel">
+
+    <!-- Mobile-only brand -->
+    <div class="mobile-brand">
+      <div class="mobile-logo-row">
+        <svg class="mobile-logo-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="100" cy="100" r="60" fill="none" stroke="#E8611A" stroke-width="7" stroke-linecap="round"/>
+          <g transform="rotate(-54,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <g transform="rotate(18,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <g transform="rotate(90,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <g transform="rotate(162,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <g transform="rotate(234,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <circle cx="100" cy="100" r="7" fill="none" stroke="#E8611A" stroke-width="4.5"/>
+          <line x1="96" y1="51" x2="104" y2="51" stroke="#E8611A" stroke-width="4" stroke-linecap="round"/>
+          <line x1="145" y1="76" x2="149" y2="69" stroke="#E8611A" stroke-width="4" stroke-linecap="round"/>
+          <line x1="140" y1="136" x2="145" y2="143" stroke="#E8611A" stroke-width="4" stroke-linecap="round"/>
+          <line x1="60" y1="136" x2="55" y2="143" stroke="#E8611A" stroke-width="4" stroke-linecap="round"/>
+          <line x1="55" y1="76" x2="51" y2="69" stroke="#E8611A" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+        <span><img src="image.png" alt="Logo" ></span>
+      </div>
+      <div class="mobile-tagline">Culinary Intelligence</div>
+    </div>
+
+    <!-- ══ CARD ══ -->
+    <div class="auth-card">
+
+      <!-- ─── LOGIN ─── -->
+      <div class="auth-page active" id="pg-login">
+        <div class="card-eyebrow">Welcome back</div>
+        <div class="card-title">Sign in</div>
+        <div class="card-sub">Access your kitchen companion</div>
+
+        <div class="field" id="l-email-f">
+          <label>Email</label>
+          <div class="input-wrap">
+            <span class="i-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2.5"/><path d="m2 7 10 7 10-7"/></svg>
+            </span>
+            <input type="email" id="l-email" placeholder="you@example.com" autocomplete="email"/>
+          </div>
+          <div class="err-msg">Enter a valid email address</div>
+        </div>
+
+        <div class="field" id="l-pass-f">
+          <label>
+            Password
+            <button class="label-action" type="button" onclick="goTo('pg-forgot')">Forgot password?</button>
+          </label>
+          <div class="input-wrap">
+            <span class="i-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2.5"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </span>
+            <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"/>
+            <button class="eye-btn" type="button" onclick="togglePw('l-pass',this)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="err-msg">Password is required</div>
+        </div>
+
+        <button class="btn-primary" id="l-btn" onclick="doLogin()">
+          <span class="btn-label">SIGN IN</span>
+        </button>
+
+        <div class="divider">or</div>
+
+        <button class="btn-social" onclick="toast('Google sign-in coming soon')">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#EA4335" d="M5.27 9.77A7 7 0 0 1 12 5c1.69 0 3.22.6 4.41 1.59L19.9 3.1A11.94 11.94 0 0 0 12 0C7.43 0 3.46 2.7 1.42 6.65l3.85 3.12z"/><path fill="#FBBC05" d="M16.04 18.01A7 7 0 0 1 12 19c-3.35 0-6.2-2.35-7.04-5.5L1.1 16.47C3.14 20.58 7.25 23.5 12 23.5a11.93 11.93 0 0 0 8.27-3.28l-4.23-2.21z"/><path fill="#4285F4" d="M23.5 12c0-.88-.08-1.73-.24-2.55H12v5.09h6.46a5.56 5.56 0 0 1-2.42 3.63l4.23 2.21C22.43 18.35 23.5 15.34 23.5 12z"/><path fill="#34A853" d="M4.96 13.5A7.07 7.07 0 0 1 4.64 12c0-.52.07-1.02.19-1.5L1.1 7.53A11.94 11.94 0 0 0 .5 12c0 1.93.46 3.76 1.28 5.38l3.18-3.88z"/></svg>
+          Continue with Google
+        </button>
+        <button class="btn-social" onclick="toast('Apple sign-in coming soon')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.4c1.29.07 2.18.71 2.94.73.96-.19 1.88-.83 3.14-.89 1.57-.08 2.76.59 3.5 1.62-3.39 1.84-2.66 6.03.42 7.42zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+          Continue with Apple
+        </button>
+
+        <div class="switch-row">
+          No account yet? &nbsp;<button class="switch-btn" onclick="goTo('pg-signup')">Create one →</button>
+        </div>
+      </div>
+
+      <!-- ─── SIGN UP ─── -->
+      <div class="auth-page" id="pg-signup">
+        <button class="back-btn" onclick="goTo('pg-login')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Back
+        </button>
+
+        <div class="card-eyebrow">Get started</div>
+        <div class="card-title">Create account</div>
+        <div class="card-sub">Join your personal kitchen companion</div>
+
+        <div class="field" id="su-name-f">
+          <label>Full Name</label>
+          <div class="input-wrap">
+            <span class="i-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg>
+            </span>
+            <input type="text" id="su-name" placeholder="Your full name" autocomplete="name"/>
+          </div>
+          <div class="err-msg">Name is required</div>
+        </div>
+
+        <div class="field" id="su-email-f">
+          <label>Email</label>
+          <div class="input-wrap">
+            <span class="i-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2.5"/><path d="m2 7 10 7 10-7"/></svg>
+            </span>
+            <input type="email" id="su-email" placeholder="you@example.com" autocomplete="email"/>
+          </div>
+          <div class="err-msg">Enter a valid email</div>
+        </div>
+
+        <div class="field" id="su-pass-f">
+          <label>Password</label>
+          <div class="input-wrap">
+            <span class="i-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2.5"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </span>
+            <input type="password" id="su-pass" placeholder="Min. 8 characters" autocomplete="new-password" oninput="strengthCheck(this.value)"/>
+            <button class="eye-btn" type="button" onclick="togglePw('su-pass',this)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="strength-track"><div class="s-seg" id="s1"></div><div class="s-seg" id="s2"></div><div class="s-seg" id="s3"></div><div class="s-seg" id="s4"></div></div>
+          <div class="err-msg">At least 8 characters required</div>
+        </div>
+
+        <div class="field" id="su-conf-f">
+          <label>Confirm Password</label>
+          <div class="input-wrap">
+            <span class="i-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </span>
+            <input type="password" id="su-conf" placeholder="Repeat password" autocomplete="new-password"/>
+            <button class="eye-btn" type="button" onclick="togglePw('su-conf',this)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="err-msg">Passwords don't match</div>
+        </div>
+
+        <div class="check-row">
+          <input type="checkbox" id="su-terms"/>
+          <span>I agree to the <button class="inline-link" onclick="toast('Terms of Service')">Terms of Service</button> and <button class="inline-link" onclick="toast('Privacy Policy')">Privacy Policy</button></span>
+        </div>
+
+        <button class="btn-primary" id="su-btn" onclick="doSignup()">
+          <span class="btn-label">CREATE ACCOUNT</span>
+        </button>
+
+        <div class="switch-row">
+          Already have an account? &nbsp;<button class="switch-btn" onclick="goTo('pg-login')">Sign in →</button>
+        </div>
+      </div>
+
+      <!-- ─── FORGOT PASSWORD ─── -->
+      <div class="auth-page" id="pg-forgot">
+        <button class="back-btn" onclick="goTo('pg-login')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Back to sign in
+        </button>
+
+        <!-- Form -->
+        <div id="fp-form">
+          <div class="card-eyebrow">Account recovery</div>
+          <div class="card-title">Reset password</div>
+          <div class="card-sub">We'll send a secure reset link to your inbox</div>
+
+          <div class="field" id="fp-email-f">
+            <label>Email</label>
+            <div class="input-wrap">
+              <span class="i-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2.5"/><path d="m2 7 10 7 10-7"/></svg>
+              </span>
+              <input type="email" id="fp-email" placeholder="you@example.com" autocomplete="email"/>
+            </div>
+            <div class="err-msg">Enter a valid email address</div>
+          </div>
+
+          <button class="btn-primary" id="fp-btn" onclick="doForgot()">
+            <span class="btn-label">SEND RESET LINK</span>
+          </button>
+        </div>
+
+        <!-- Success -->
+        <div class="success-wrap" id="fp-success">
+          <div class="success-ring">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#52d97a" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="card-title" style="text-align:center;margin-bottom:8px">Check your inbox</div>
+          <div class="card-sub" style="text-align:center;margin-bottom:26px">
+            A reset link was sent to<br>
+            <span id="fp-sent" style="color:var(--ox);font-weight:500"></span>
+          </div>
+          <button class="btn-ghost" onclick="goTo('pg-login')">BACK TO SIGN IN</button>
+          <div style="margin-top:14px;text-align:center;font-size:12px;color:var(--tx3)">
+            Didn't get it? <button class="inline-link" onclick="toast('Reset email resent!')">Resend</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- /auth-card -->
+
+  </div>
+  <!-- /right-panel -->
+
+</div>
+<!-- /shell -->
+
+<div class="toast" id="toast-el"></div>
+
+<script>
+// ═══════════════════════════════════════
+//  CANVAS BACKGROUND  —  floating particles
+// ═══════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('canvas-bg');
+  const ctx    = canvas.getContext('2d');
+  let W, H, particles;
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+
+  function mkParticle() {
+    return {
+      x:  Math.random() * W,
+      y:  Math.random() * H,
+      r:  Math.random() * 1.6 + 0.4,
+      vx: (Math.random() - 0.5) * 0.25,
+      vy: (Math.random() - 0.5) * 0.25,
+      a:  Math.random() * 0.4 + 0.06,
+      pulse: Math.random() * Math.PI * 2,
+    };
+  }
+
+  function init() {
+    resize();
+    particles = Array.from({ length: 90 }, mkParticle);
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // Large ambient blobs
+    const grad1 = ctx.createRadialGradient(W * 0.28, H * 0.32, 0, W * 0.28, H * 0.32, W * 0.38);
+    grad1.addColorStop(0, 'rgba(190,58,8,0.13)');
+    grad1.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad1;
+    ctx.fillRect(0, 0, W, H);
+
+    const grad2 = ctx.createRadialGradient(W * 0.72, H * 0.72, 0, W * 0.72, H * 0.72, W * 0.28);
+    grad2.addColorStop(0, 'rgba(150,42,5,0.08)');
+    grad2.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad2;
+    ctx.fillRect(0, 0, W, H);
+
+    const t = Date.now() * 0.001;
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+      const alpha = p.a * (0.6 + 0.4 * Math.sin(t + p.pulse));
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(232,97,26,${alpha})`;
+      ctx.fill();
+    });
+
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', () => { resize(); });
+  init(); draw();
+})();
+
+// ═══════════════════════════════════════
+//  PAGE NAV
+// ═══════════════════════════════════════
+let cur = 'pg-login';
+
+function goTo(id) {
+  if (id === cur) return;
+  document.getElementById(cur).classList.remove('active');
+  document.getElementById(id).classList.add('active');
+  // Scroll card to top
+  document.querySelector('.auth-card').scrollTop = 0;
+  cur = id;
+}
+
+// ═══════════════════════════════════════
+//  PASSWORD SHOW/HIDE
+// ═══════════════════════════════════════
+function togglePw(id, btn) {
+  const el = document.getElementById(id);
+  const hidden = el.type === 'password';
+  el.type = hidden ? 'text' : 'password';
+  btn.style.color = hidden ? 'var(--ox)' : '';
+  btn.innerHTML = hidden
+    ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
+    : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+}
+
+// ═══════════════════════════════════════
+//  STRENGTH
+// ═══════════════════════════════════════
+function strengthCheck(pw) {
+  const ids = ['s1','s2','s3','s4'];
+  ids.forEach(i => { const el = document.getElementById(i); el.className = 's-seg'; });
+  if (!pw) return;
+  let score = 0;
+  if (pw.length >= 8)        score++;
+  if (/[A-Z]/.test(pw))     score++;
+  if (/[0-9]/.test(pw))     score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  const cls = ['','w','f','g','s'][score];
+  for (let i = 0; i < score; i++) document.getElementById(ids[i]).classList.add(cls);
+}
+
+// ═══════════════════════════════════════
+//  VALIDATION
+// ═══════════════════════════════════════
+const validEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+function setErr(id, on) { document.getElementById(id).classList.toggle('has-error', on); }
+function clrErr(...ids) { ids.forEach(i => setErr(i, false)); }
+
+// ═══════════════════════════════════════
+//  LOADING
+// ═══════════════════════════════════════
+function setLoading(id, on) {
+  document.getElementById(id).classList.toggle('loading', on);
+}
+
+// ═══════════════════════════════════════
+//  HANDLERS
+// ═══════════════════════════════════════
+function doLogin() {
+  const e = document.getElementById('l-email').value.trim();
+  const p = document.getElementById('l-pass').value;
+  clrErr('l-email-f','l-pass-f');
+  let ok = true;
+  if (!validEmail(e)) { setErr('l-email-f', true); ok = false; }
+  if (!p)             { setErr('l-pass-f',  true); ok = false; }
+  if (!ok) return;
+  setLoading('l-btn', true);
+  setTimeout(() => {
+    setLoading('l-btn', false);
+    toast('✓ Signed in! Taking you in…');
+    setTimeout(() => { window.location.href = 'mise-ai.html'; }, 900);
+  }, 1600);
+}
+
+function doSignup() {
+  const n  = document.getElementById('su-name').value.trim();
+  const e  = document.getElementById('su-email').value.trim();
+  const p  = document.getElementById('su-pass').value;
+  const c  = document.getElementById('su-conf').value;
+  const tk = document.getElementById('su-terms').checked;
+  clrErr('su-name-f','su-email-f','su-pass-f','su-conf-f');
+  let ok = true;
+  if (!n)             { setErr('su-name-f',  true); ok = false; }
+  if (!validEmail(e)) { setErr('su-email-f', true); ok = false; }
+  if (p.length < 8)   { setErr('su-pass-f',  true); ok = false; }
+  if (p !== c)        { setErr('su-conf-f',  true); ok = false; }
+  if (!ok) return;
+  if (!tk) { toast('Please accept the Terms of Service'); return; }
+  setLoading('su-btn', true);
+  setTimeout(() => {
+    setLoading('su-btn', false);
+    toast('✓ Account created! Welcome to Mise AI');
+    setTimeout(() => goTo('pg-login'), 1100);
+  }, 2000);
+}
+
+function doForgot() {
+  const e = document.getElementById('fp-email').value.trim();
+  setErr('fp-email-f', false);
+  if (!validEmail(e)) { setErr('fp-email-f', true); return; }
+  setLoading('fp-btn', true);
+  setTimeout(() => {
+    setLoading('fp-btn', false);
+    document.getElementById('fp-sent').textContent = e;
+    document.getElementById('fp-form').style.display = 'none';
+    document.getElementById('fp-success').classList.add('show');
+  }, 1800);
+}
+
+// ═══════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════
+let toastTmr;
+function toast(msg) {
+  const el = document.getElementById('toast-el');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTmr);
+  toastTmr = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ═══════════════════════════════════════
+//  ENTER KEY
+// ═══════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (cur === 'pg-login')  doLogin();
+  if (cur === 'pg-signup') doSignup();
+  if (cur === 'pg-forgot') doForgot();
+});
+
+// Reset forgot page on leaving
+function resetForgot() {
+  document.getElementById('fp-form').style.display = '';
+  const sw = document.getElementById('fp-success');
+  sw.classList.remove('show');
+  document.getElementById('fp-email').value = '';
+  setErr('fp-email-f', false);
+}
+const origGoTo = goTo;
+</script>
+
+</body>
+</html>
