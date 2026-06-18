@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Kitchen Planner — Mise AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ox:#E8611A; --ox-hi:#FF7C38; --ox-lo:#A84410;
+  --ox-glow:rgba(232,97,26,.5); --ox-ring:rgba(232,97,26,.25);
+  --ox-wash:rgba(232,97,26,.07); --ox-wash2:rgba(232,97,26,.13);
+  --bg:#FDFAF7; --bg2:#F7F2EC; --bg3:#F0E8DC;
+  --panel:#FFFFFF; --panel2:#FBF7F3;
+  --border:rgba(0,0,0,.08); --border-ox:rgba(232,97,26,.2);
+  --tx:#1A1108; --tx2:rgba(26,17,8,.55); --tx3:rgba(26,17,8,.32);
+  --green:#2D9E5F; --red:#D93B3B;
+  --mono:'Plus Jakarta Sans',sans-serif; --mono-ital:'Plus Jakarta Sans',sans-serif;
+  --r:16px; --r-sm:10px; --r-xs:7px;
+  --sh:0 2px 12px rgba(0,0,0,.06);
+  --sh-md:0 6px 30px rgba(0,0,0,.10);
+  --sh-ox:0 4px 20px rgba(232,97,26,.25);
+}
+html,body{min-height:100%;font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);
+  color:var(--tx);-webkit-font-smoothing:antialiased}
+
+/* ═══════════ TOPBAR ═══════════ */
+.topbar{
+  position:sticky;top:0;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:60px;
+  background:rgba(253,250,247,.94);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(14px);
+}
+.tb-left{display:flex;align-items:center;gap:15px}
+.tb-back{width:36px;height:36px;border-radius:50%;
+  background:var(--ox);border:none;color:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--sh-ox);transition:background .2s,transform .15s}
+.tb-back:hover{background:var(--ox-lo)}
+.tb-back:active{transform:scale(.93)}
+.tb-logo-wrap{display:flex;align-items:center;gap:2px}
+.tb-logo{width:44px;height:44px}
+.tb-brand img {width:100px;height:auto}
+.tb-pipe{width:1px;height:18px;background:var(--border-ox)}
+.tb-sub{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx3)}
+.tb-right{display:flex;align-items:center;gap:10px}
+.tb-ai-btn{display:flex;align-items:center;gap:7px;
+  padding:8px 16px;border-radius:99px;
+  background:linear-gradient(135deg,var(--ox-hi),var(--ox-lo));
+  border:none;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:12px;font-weight:600;letter-spacing:.06em;cursor:pointer;
+  box-shadow:var(--sh-ox);transition:transform .15s,box-shadow .2s}
+.tb-ai-btn:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(232,97,26,.4)}
+.tb-ai-btn svg{width:20px;height:20px}
+
+/* ═══════════ MAIN LAYOUT ═══════════ */
+.shell{max-width:760px;margin:0 auto;padding:28px 24px 80px;
+  display:flex;flex-direction:column;gap:24px}
+
+/* ═══════════ PAGE TITLE ═══════════ */
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.page-head h1{font-family:'Quicksand',sans-serif;font-size:32px;font-weight:400;
+  color:var(--tx);line-height:1.15}
+.page-head h1 em{font-style:italic;color:var(--ox)}
+.page-head p{font-size:13px;color:var(--tx2);margin-top:5px;line-height:1.6}
+
+/* ═══════════ SELECTED ITEMS BANNER ═══════════ */
+.selected-banner{
+  background:linear-gradient(135deg,rgba(232,97,26,.07) 0%,rgba(232,97,26,.03) 100%);
+  border:1.5px solid var(--border-ox);
+  border-radius:var(--r);padding:20px;
+  display:flex;flex-direction:column;gap:14px;
+  position:relative;overflow:hidden;
+}
+.selected-banner::before{
+  content:'';position:absolute;top:-30px;right:-30px;
+  width:120px;height:120px;border-radius:50%;
+  background:radial-gradient(circle,rgba(232,97,26,.12) 0%,transparent 70%);
+  pointer-events:none;
+}
+.sb-top{display:flex;align-items:center;justify-content:space-between}
+.sb-label{font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--tx3)}
+.sb-count{font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:99px;
+  background:var(--ox-wash2);color:var(--ox);border:1px solid var(--border-ox)}
+
+.sb-chips{display:flex;flex-wrap:wrap;gap:8px;min-height:36px}
+.sb-empty{font-size:13px;color:var(--tx3);font-style:italic;padding:6px 0}
+.chip{display:flex;align-items:center;gap:6px;
+  padding:6px 12px;border-radius:99px;
+  background:var(--panel);border:1px solid var(--border);
+  font-size:12px;font-weight:500;color:var(--tx);
+  animation:chipin .2s ease both;box-shadow:var(--sh)}
+@keyframes chipin{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+.chip-qty{font-family:var(--mono);font-size:10px;color:var(--tx3)}
+.chip-remove{background:none;border:none;cursor:pointer;
+  color:var(--tx3);font-size:12px;padding:0 0 0 2px;
+  transition:color .2s;line-height:1}
+.chip-remove:hover{color:var(--red)}
+
+/* ═══════════ PLAN CARD ═══════════ */
+.plan-card{background:var(--panel);border:1px solid var(--border);
+  border-radius:var(--r);padding:24px;box-shadow:var(--sh)}
+.card-section-title{font-size:11px;font-weight:600;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--tx3);margin-bottom:14px}
+
+/* Name input */
+.plan-name-wrap{position:relative;margin-bottom:20px}
+.plan-name-input{width:100%;padding:14px 16px;
+  border-radius:var(--r-sm);border:1.5px solid var(--border);
+  background:var(--bg2);font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:22px;font-weight:400;color:var(--tx);outline:none;
+  transition:border-color .2s,box-shadow .2s;
+  letter-spacing:.02em}
+.plan-name-input::placeholder{color:var(--tx3)}
+.plan-name-input:focus{border-color:var(--border-ox);
+  box-shadow:0 0 0 3px rgba(232,97,26,.08)}
+
+/* Time picker section */
+.time-section{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.time-field{display:flex;flex-direction:column;gap:7px}
+.field-label{font-size:11px;font-weight:600;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--tx3)}
+.field-input{padding:12px 14px;border-radius:var(--r-sm);
+  border:1.5px solid var(--border);background:var(--bg2);
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;
+  color:var(--tx);outline:none;transition:border-color .2s,box-shadow .2s;width:100%}
+.field-input:focus{border-color:var(--border-ox);box-shadow:0 0 0 3px rgba(232,97,26,.08)}
+.field-input::-webkit-calendar-picker-indicator{opacity:.5;cursor:pointer}
+
+/* Alert toggle */
+.alert-row{display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;border-radius:var(--r-sm);
+  background:var(--bg2);border:1.5px solid var(--border);margin-bottom:20px}
+.alert-info{display:flex;flex-direction:column;gap:3px}
+.alert-title{font-size:14px;font-weight:500;color:var(--tx)}
+.alert-sub{font-size:12px;color:var(--tx2)}
+.toggle{position:relative;width:44px;height:26px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;border-radius:99px;
+  background:var(--border);cursor:pointer;transition:background .25s}
+.toggle-slider::before{content:'';position:absolute;
+  width:20px;height:20px;left:3px;top:3px;border-radius:50%;
+  background:#fff;transition:transform .25s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.toggle input:checked+.toggle-slider{background:var(--ox)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(18px)}
+
+/* Notes */
+.notes-textarea{width:100%;padding:12px 14px;
+  border-radius:var(--r-sm);border:1.5px solid var(--border);
+  background:var(--bg2);font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:14px;color:var(--tx);resize:vertical;min-height:80px;
+  outline:none;transition:border-color .2s;line-height:1.6;
+  margin-bottom:20px}
+.notes-textarea::placeholder{color:var(--tx3)}
+.notes-textarea:focus{border-color:var(--border-ox);box-shadow:0 0 0 3px rgba(232,97,26,.08)}
+
+/* Save button */
+.save-btn{width:100%;padding:15px;border-radius:var(--r-sm);
+  background:linear-gradient(135deg,var(--ox-hi) 0%,var(--ox) 50%,var(--ox-lo) 100%);
+  background-size:200% 200%;background-position:0 50%;
+  border:none;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:16px;font-weight:600;letter-spacing:.14em;cursor:pointer;
+  box-shadow:var(--sh-ox);transition:transform .15s,box-shadow .2s,background-position .4s;
+  position:relative;overflow:hidden}
+.save-btn::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.14) 0%,transparent 55%);
+  opacity:0;transition:opacity .2s}
+.save-btn:hover{transform:translateY(-2px);
+  box-shadow:0 8px 28px rgba(232,97,26,.45);background-position:100% 50%}
+.save-btn:hover::before{opacity:1}
+.save-btn:active{transform:scale(.98)}
+
+/* ═══════════ SAVED PLANS ═══════════ */
+
+.plans-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.plans-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:400}
+.clear-plans-btn{font-size:12px;color:var(--tx3);background:none;
+  border:1px solid var(--border);border-radius:99px;padding:5px 12px;
+  cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s}
+.clear-plans-btn:hover{color:var(--red);border-color:rgba(217,59,59,.3)}
+
+.plans-empty{text-align:center;padding:40px 20px;
+  background:var(--panel);border:1.5px dashed var(--border);
+  border-radius:var(--r);color:var(--tx3)}
+.plans-empty-icon{font-size:36px;margin-bottom:10px}
+.plans-empty p{font-size:13px;line-height:1.6}
+
+.plan-list{display:flex;flex-direction:column;gap:10px}
+.plan-item{background:var(--panel);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;
+  box-shadow:var(--sh);animation:planin .3s ease both;
+  transition:border-color .2s}
+@keyframes planin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.plan-item:hover{border-color:var(--border-ox)}
+.plan-item-head{display:flex;align-items:center;justify-content:space-between;
+  padding:16px 18px 12px;cursor:pointer;user-select:none;gap:12px}
+.plan-item-left{display:flex;align-items:center;gap:12px;min-width:0}
+.plan-status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.plan-status-dot.pending{background:#f0a500;box-shadow:0 0 6px rgba(240,165,0,.5)}
+.plan-status-dot.cooking{background:var(--green);box-shadow:0 0 6px rgba(45,158,95,.5);
+  animation:statusblink 1s ease-in-out infinite}
+.plan-status-dot.done{background:var(--tx3)}
+@keyframes statusblink{0%,100%{opacity:1}50%{opacity:.3}}
+.plan-name-text{font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:400}
+.plan-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.plan-tag{display:flex;align-items:center;gap:5px;white-space:nowrap;
+  font-family:var(--mono);font-size:10px;
+  padding:3px 9px;border-radius:99px;
+  border:1px solid var(--border);color:var(--tx3);background:var(--bg2)}
+.plan-tag svg{width:11px;height:11px}
+.plan-tag.alert-on{border-color:rgba(240,165,0,.35);color:#c07800;background:rgba(240,165,0,.07)}
+.plan-item-actions{display:flex;gap:8px;flex-shrink:0}
+.plan-action-btn{padding:5px 12px;border-radius:99px;font-size:11px;white-space:nowrap;
+  font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;
+  border:1px solid var(--border);background:none;color:var(--tx2);
+  transition:all .2s}
+.plan-action-btn:hover{border-color:var(--border-ox);color:var(--ox);background:var(--ox-wash)}
+.plan-action-btn.start{background:var(--ox);color:#fff;border-color:var(--ox)}
+.plan-action-btn.start:hover{background:var(--ox-lo)}
+.plan-action-btn.danger:hover{background:rgba(217,59,59,.07);border-color:rgba(217,59,59,.3);color:var(--red)}
+
+.plan-body{display:none;padding:0 18px 16px;border-top:1px solid var(--border)}
+.plan-body.open{display:block}
+.plan-chips{display:flex;flex-wrap:wrap;gap:6px;padding-top:14px;margin-bottom:12px}
+.plan-chip{padding:5px 11px;border-radius:99px;
+  background:var(--bg2);border:1px solid var(--border);
+  font-size:12px;color:var(--tx2)}
+.plan-chip em{font-style:normal;color:var(--tx3);font-family:var(--mono);font-size:10px;margin-left:4px}
+.plan-notes{font-size:13px;color:var(--tx2);line-height:1.65;
+  background:var(--bg2);border-radius:var(--r-xs);padding:10px 12px;
+  border:1px solid var(--border)}
+.countdown-bar{display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:var(--r-xs);
+  background:rgba(240,165,0,.07);border:1px solid rgba(240,165,0,.25);
+  margin-bottom:10px}
+.countdown-bar svg{width:14px;height:14px;color:#c07800;flex-shrink:0}
+.countdown-text{font-family:var(--mono);font-size:11px;color:#c07800;letter-spacing:.06em}
+.countdown-bar.ready{background:rgba(45,158,95,.07);border-color:rgba(45,158,95,.3)}
+.countdown-bar.ready svg,.countdown-bar.ready .countdown-text{color:var(--green)}
+.countdown-bar.overdue{background:rgba(217,59,59,.07);border-color:rgba(217,59,59,.25)}
+.countdown-bar.overdue svg,.countdown-bar.overdue .countdown-text{color:var(--red)}
+
+/* ═══════════ AI CHAT DRAWER ═══════════ */
+.drawer-overlay{position:fixed;inset:0;background:rgba(26,17,8,.35);
+  z-index:300;opacity:0;pointer-events:none;transition:opacity .3s}
+.drawer-overlay.open{opacity:1;pointer-events:all}
+.drawer{position:fixed;bottom:0;right:0;top:0;width:420px;max-width:100vw;
+  background:var(--panel);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);
+  z-index:301;box-shadow:-8px 0 40px rgba(0,0,0,.12)}
+.drawer.open{transform:translateX(0)}
+
+.drawer-top{display:flex;align-items:center;justify-content:space-between;
+  padding:18px 20px;border-bottom:1px solid var(--border);flex-shrink:0;
+  background:linear-gradient(135deg,rgba(232,97,26,.05),rgba(232,97,26,.02))}
+.drawer-logo-row{display:flex;align-items:center;gap:10px}
+.drawer-logo{width:28px;height:28px}
+.drawer-brand{font-family:'Plus Jakarta Sans',sans-serif;font-size:17px;
+  font-weight:600;letter-spacing:.15em;color:var(--ox)}
+.drawer-sub{font-size:11px;color:var(--tx3);letter-spacing:.06em}
+.drawer-close{width:32px;height:32px;border-radius:50%;
+  background:var(--bg2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--tx2);transition:all .2s}
+.drawer-close:hover{background:#fff0ee;color:var(--red);border-color:rgba(217,59,59,.3)}
+
+/* Context bar */
+.ctx-bar{display:flex;align-items:center;gap:8px;
+  padding:10px 16px;background:var(--ox-wash);
+  border-bottom:1px solid var(--border-ox);flex-shrink:0}
+.ctx-bar svg{width:13px;height:13px;color:var(--ox);flex-shrink:0}
+.ctx-text{font-size:11px;color:var(--ox);font-family:var(--mono);
+  letter-spacing:.05em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Chat area */
+.chat-area{flex:1;overflow-y:auto;padding:16px;
+  display:flex;flex-direction:column;gap:10px;
+  scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.chat-area::-webkit-scrollbar{width:4px}
+.chat-area::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+.msg{max-width:82%;padding:11px 14px;border-radius:14px;
+  font-size:13px;line-height:1.65;animation:msgin .25s ease}
+@keyframes msgin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{align-self:flex-end;background:var(--ox);color:#fff;
+  border-bottom-right-radius:4px}
+.msg.ai{align-self:flex-start;
+  background:var(--bg2);border:1px solid var(--border);
+  color:var(--tx);border-bottom-left-radius:4px}
+.msg.ai.typing{display:flex;align-items:center;gap:5px;padding:13px 16px}
+.tdot{width:7px;height:7px;border-radius:50%;background:var(--ox);
+  animation:tdot 1.2s ease-in-out infinite}
+.tdot:nth-child(2){animation-delay:.2s}
+.tdot:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,80%,100%{transform:scale(.7);opacity:.4}40%{transform:scale(1);opacity:1}}
+
+/* Chat input */
+.chat-input-wrap{display:flex;align-items:center;gap:10px;
+  padding:14px 16px;border-top:1px solid var(--border);flex-shrink:0;
+  background:var(--panel)}
+.chat-input{flex:1;padding:11px 14px;border-radius:99px;
+  border:1.5px solid var(--border);background:var(--bg2);
+  font-family:'DM Sans',sans-serif;font-size:13px;
+  color:var(--tx);outline:none;transition:border-color .2s;
+  caret-color:var(--ox)}
+.chat-input::placeholder{color:var(--tx3)}
+.chat-input:focus{border-color:var(--border-ox)}
+.chat-send{width:38px;height:38px;border-radius:50%;
+  background:var(--ox);border:none;color:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--sh-ox);transition:transform .15s,background .2s;flex-shrink:0}
+.chat-send:hover{background:var(--ox-lo)}
+.chat-send:active{transform:scale(.92)}
+.chat-send svg{width:16px;height:16px}
+
+/* Suggested prompts */
+.suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px 0;flex-shrink:0}
+.sug-btn{padding:6px 12px;border-radius:99px;border:1px solid var(--border-ox);
+  background:var(--ox-wash);color:var(--ox);font-size:11px;font-weight:500;
+  font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s}
+.sug-btn:hover{background:var(--ox-wash2)}
+
+/* ═══════════ ALERT NOTIFICATION ═══════════ */
+.alert-notif{position:fixed;top:70px;left:50%;
+  transform:translateX(-50%) translateY(-10px);
+  background:#fff;border:1.5px solid rgba(240,165,0,.5);
+  border-radius:14px;padding:14px 18px;
+  box-shadow:0 8px 32px rgba(0,0,0,.12),0 0 0 4px rgba(240,165,0,.1);
+  z-index:400;display:flex;align-items:center;gap:12px;
+  opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;
+  min-width:260px;max-width:340px}
+.alert-notif.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.alert-bell{width:36px;height:36px;border-radius:50%;
+  background:rgba(240,165,0,.12);border:1px solid rgba(240,165,0,.3);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.alert-bell svg{width:18px;height:18px;color:#c07800}
+
+.alert-notif-title{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:2px}
+.alert-notif-sub{font-size:11px;color:var(--tx2)}
+.alert-dismiss{position:absolute;top:8px;right:10px;
+  background:none;border:none;color:var(--tx3);cursor:pointer;font-size:14px}
+
+/* ═══════════ TOAST ═══════════ */
+.toast{position:fixed;bottom:28px;left:50%;
+  transform:translateX(-50%) translateY(14px);
+  background:#111;color:#fff;padding:10px 22px;border-radius:99px;
+  font-size:12px;font-weight:500;z-index:500;opacity:0;pointer-events:none;
+  transition:opacity .3s,transform .3s;white-space:nowrap;
+  box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ═══════════ RESPONSIVE ═══════════ */
+@media(max-width:600px){
+  .shell{padding:20px 16px 80px}
+  .time-section{grid-template-columns:1fr}
+  .drawer{width:100%;top:auto;height:85vh;border-left:none;
+    border-top:1px solid var(--border);border-radius:20px 20px 0 0}
+  .drawer.open{transform:translateY(0)}
+  .drawer{transform:translateY(100%)}
+
+  /* Topbar: drop secondary wordmark/eyebrow so back+logo and the AI
+     button always fit on one line; "Kitchen Planner" is already the H1 below. */
+  .topbar{padding:0 14px}
+  .tb-left{gap:10px}
+  .tb-brand,.tb-pipe,.tb-sub{display:none}
+  .tb-ai-btn{padding:8px 14px;white-space:nowrap}
+
+  .toast{max-width:calc(100% - 32px);white-space:normal;text-align:center;
+    padding:10px 18px}
+}
+
+@media(max-width:380px){
+  .tb-logo{width:38px;height:38px}
+  .tb-back{width:32px;height:32px}
+  .tb-ai-btn{padding:7px 12px;font-size:11px}
+  .tb-ai-btn svg{width:17px;height:17px}
+
+  /* Stack actions under the name/meta block when space is tightest,
+     instead of squeezing both onto one cramped row. */
+  .plan-item-head{flex-wrap:wrap}
+  .plan-item-actions{width:100%;justify-content:flex-end}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ TOPBAR ══ -->
+<header class="topbar">
+  <div class="tb-left">
+    <button class="tb-back" onclick="goBack()" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="15" height="15"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="tb-logo-wrap">
+    <svg class="tb-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="100" cy="100" r="60" fill="none" stroke="#E8611A" stroke-width="8" stroke-linecap="round"/>
+      <g transform="rotate(-54,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+      <g transform="rotate(18,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+      <g transform="rotate(90,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+      <g transform="rotate(162,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+      <g transform="rotate(234,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+      <circle cx="100" cy="100" r="7" fill="none" stroke="#E8611A" stroke-width="5"/>
+    </svg>
+    <span class="tb-brand"><img src="image.png" alt="Mise AI"></span>
+    </div>
+    <div class="tb-pipe"></div>
+    <span class="tb-sub">Kitchen Planner</span>
+  </div>
+  <div class="tb-right">
+    <button class="tb-ai-btn" onclick="openDrawer()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Ask Mise AI
+    </button>
+  </div>
+</header>
+
+<!-- ══ MAIN ══ -->
+<div class="shell">
+
+  <!-- Page title -->
+  <div class="page-head">
+    <div>
+      <h1>Kitchen <em>Planner</em></h1>
+      <p>Name your selected ingredients, set a prep alert, and save your meal plan.</p>
+    </div>
+  </div>
+
+  <!-- Selected items from inventory -->
+  <div class="selected-banner">
+    <div class="sb-top">
+      <span class="sb-label">Selected from Inventory</span>
+      <span class="sb-count" id="sel-count">0 items</span>
+    </div>
+    <div class="sb-chips" id="sel-chips">
+      <span class="sb-empty" id="sel-empty">No items selected — go back to inventory and check items.</span>
+    </div>
+  </div>
+
+  <!-- Plan card -->
+  <div class="plan-card">
+    <div class="card-section-title">Meal Plan Details</div>
+
+    <!-- Plan name -->
+    <input class="plan-name-input" id="plan-name" type="text"
+      placeholder="e.g. Sunday Jollof Rice…" autocomplete="off"/>
+
+    <!-- Time section -->
+    <div class="time-section">
+      <div class="time-field">
+        <div class="field-label">Prep Date</div>
+        <input class="field-input" id="plan-date" type="date"/>
+      </div>
+      <div class="time-field">
+        <div class="field-label">Prep Time</div>
+        <input class="field-input" id="plan-time" type="time"/>
+      </div>
+    </div>
+
+    <!-- Alert toggle -->
+    <div class="alert-row">
+      <div class="alert-info">
+        <div class="alert-title">🔔 Enable Time Alert</div>
+        <div class="alert-sub">Notify me when it's time to start preparing</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="alert-toggle" checked/>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <!-- Notes -->
+    <textarea class="notes-textarea" id="plan-notes"
+      placeholder="Optional notes — special instructions, serving size, variations…"></textarea>
+
+    <!-- Save -->
+    <button class="save-btn" onclick="savePlan()">SAVE MEAL PLAN</button>
+  </div>
+
+  <!-- Saved plans -->
+  <div class="plans-section">
+    <div class="plans-header">
+      <div class="plans-title">Saved Plans</div>
+      <button class="clear-plans-btn" onclick="clearAllPlans()">Clear All</button>
+    </div>
+    <div id="plans-wrap">
+      <div class="plans-empty" id="plans-empty">
+        <div class="plans-empty-icon">📋</div>
+        <p>No meal plans yet.<br>Fill in the details above and save your first plan.</p>
+      </div>
+      <div class="plan-list" id="plan-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ AI CHAT DRAWER ══ -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-top">
+    <div>
+      <div class="drawer-logo-row">
+        <svg class="drawer-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="100" cy="100" r="60" fill="none" stroke="#E8611A" stroke-width="8" stroke-linecap="round"/>
+          <g transform="rotate(-54,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <g transform="rotate(18,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <g transform="rotate(90,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <g transform="rotate(162,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <g transform="rotate(234,100,100)"><path d="M100,100 C88,78 86,58 100,54 C114,58 112,78 100,100 Z" fill="none" stroke="#E8611A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+          <circle cx="100" cy="100" r="7" fill="none" stroke="#E8611A" stroke-width="5"/>
+        </svg>
+        <span class="drawer-brand">MISE AI</span>
+      </div>
+      <div class="drawer-sub">Culinary Assistant</div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+
+  <!-- Context bar showing current ingredients -->
+  <div class="ctx-bar" id="ctx-bar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span class="ctx-text" id="ctx-text">No ingredients selected yet</span>
+  </div>
+
+  <!-- Suggested prompts -->
+  <div class="suggestions" id="suggestions">
+    <button class="sug-btn" onclick="sendSuggestion(this)">What can I cook with these?</button>
+    <button class="sug-btn" onclick="sendSuggestion(this)">Give me a recipe</button>
+    <button class="sug-btn" onclick="sendSuggestion(this)">Cooking tips</button>
+    <button class="sug-btn" onclick="sendSuggestion(this)">How long will prep take?</button>
+  </div>
+
+  <!-- Chat messages -->
+  <div class="chat-area" id="chat-area">
+    <div class="msg ai">👋 Hello! I'm Mise AI, your kitchen assistant. I can see your selected ingredients and help you plan your meal, suggest recipes, or give you step-by-step cooking guidance. What would you like to know?</div>
+  </div>
+
+  <!-- Input -->
+  <div class="chat-input-wrap">
+    <input class="chat-input" id="chat-input" type="text"
+      placeholder="Ask about your ingredients…" autocomplete="off"/>
+    <button class="chat-send" onclick="sendChat()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ══ ALERT NOTIFICATION ══ -->
+<div class="alert-notif" id="alert-notif">
+  <div class="alert-bell">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+  </div>
+  <div class="alert-notif-text">
+    <div class="alert-notif-title" id="alert-title">Time to cook!</div>
+    <div class="alert-notif-sub" id="alert-sub">Your meal plan is ready to start.</div>
+  </div>
+  <button class="alert-dismiss" onclick="dismissAlert()">✕</button>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  SHARED STATE — reads from inventory.js via localStorage or direct
+// ═══════════════════════════════════════════
+let selectedItems = [];   // items checked in inventory
+let plans = JSON.parse(localStorage.getItem('mise_plans') || '[]');
+let chatHistory = [];
+let alertTimers = [];
+
+// ═══════════════════════════════════════════
+//  LOAD SELECTED ITEMS FROM INVENTORY
+//  inventory.js stores checked state in localStorage key 'mise_inventory'
+//  If not found, we demo with sample data
+// ═══════════════════════════════════════════
+function loadSelectedItems() {
+  // Only items explicitly checked in inventory.html appear here.
+  // inventory_patch.js writes checked items (full objects) to
+  // 'mise_inventory_selected' on every checkbox change.
+  // If the key is absent or the array is empty the empty-state
+  // message renders — no demo/default items are ever injected.
+  const stored = localStorage.getItem('mise_inventory_selected');
+  if (stored !== null) {
+    try { selectedItems = JSON.parse(stored); } catch(e) { selectedItems = []; }
+  }
+  // selectedItems stays [] when nothing is checked — shows empty state.
+
+  renderSelectedChips();
+  updateContextBar();
+  updateSuggestions();
+}
+
+function renderSelectedChips() {
+  const wrap  = document.getElementById('sel-chips');
+  const empty = document.getElementById('sel-empty');
+  const count = document.getElementById('sel-count');
+
+  count.textContent = selectedItems.length + ' item' + (selectedItems.length !== 1 ? 's' : '');
+
+  if (!selectedItems.length) {
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+
+  // Keep empty node, clear chips
+  wrap.querySelectorAll('.chip').forEach(c => c.remove());
+
+  selectedItems.forEach(item => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    const em = item.emoji && item.emoji !== '__MISE_LOGO__' ? item.emoji : '🍽';
+    chip.innerHTML = `<span>${em}</span><span>${item.name}</span>
+      <span class="chip-qty">${item.qty}</span>
+      <button class="chip-remove" onclick="removeSelected(${item.id})" title="Remove">✕</button>`;
+    wrap.appendChild(chip);
+  });
+}
+
+function removeSelected(id) {
+  selectedItems = selectedItems.filter(i => i.id !== id);
+  renderSelectedChips();
+  updateContextBar();
+  updateSuggestions();
+}
+
+function updateContextBar() {
+  const el = document.getElementById('ctx-text');
+  if (!selectedItems.length) {
+    el.textContent = 'No ingredients selected yet';
+  } else {
+    el.textContent = 'Context: ' + selectedItems.map(i => i.name).join(', ');
+  }
+}
+
+function updateSuggestions() {
+  if (selectedItems.length) {
+    const name = selectedItems[0].name;
+    const btn = document.querySelector('.sug-btn');
+    if (btn) btn.textContent = `What can I make with ${name}?`;
+  }
+}
+
+// ═══════════════════════════════════════════
+//  SAVE PLAN
+// ═══════════════════════════════════════════
+function savePlan() {
+  const name  = document.getElementById('plan-name').value.trim();
+  const date  = document.getElementById('plan-date').value;
+  const time  = document.getElementById('plan-time').value;
+  const alert = document.getElementById('alert-toggle').checked;
+  const notes = document.getElementById('plan-notes').value.trim();
+
+  if (!name) {
+    document.getElementById('plan-name').focus();
+    document.getElementById('plan-name').style.borderColor = 'var(--ox)';
+    setTimeout(() => document.getElementById('plan-name').style.borderColor = '', 1400);
+    showToast('⚠ Please enter a meal plan name');
+    return;
+  }
+  if (!selectedItems.length) {
+    showToast('⚠ No ingredients selected — go back to inventory');
+    return;
+  }
+
+  const plan = {
+    id: Date.now(),
+    name, date, time,
+    alertEnabled: alert,
+    notes,
+    items: [...selectedItems],
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+  };
+
+  plans.unshift(plan);
+  localStorage.setItem('mise_plans', JSON.stringify(plans));
+
+  // Schedule alert
+  if (alert && date && time) scheduleAlert(plan);
+
+  renderPlans();
+  clearForm();
+  showToast(`✅ "${name}" saved!`);
+}
+
+function clearForm() {
+  document.getElementById('plan-name').value  = '';
+  document.getElementById('plan-date').value  = '';
+  document.getElementById('plan-time').value  = '';
+  document.getElementById('plan-notes').value = '';
+}
+
+// ═══════════════════════════════════════════
+//  RENDER PLANS
+// ═══════════════════════════════════════════
+function renderPlans() {
+  const list  = document.getElementById('plan-list');
+  const empty = document.getElementById('plans-empty');
+  list.innerHTML = '';
+
+  if (!plans.length) { empty.style.display = ''; return; }
+  empty.style.display = 'none';
+
+  plans.forEach((plan, idx) => {
+    const div = document.createElement('div');
+    div.className = 'plan-item';
+    div.id = 'plan-' + plan.id;
+
+    const dotClass = plan.status === 'cooking' ? 'cooking' : plan.status === 'done' ? 'done' : 'pending';
+    const statusLabel = plan.status === 'cooking' ? 'Cooking' : plan.status === 'done' ? 'Done' : 'Pending';
+
+    let timeTag = '';
+    if (plan.date && plan.time) {
+      timeTag = `<span class="plan-tag ${plan.alertEnabled ? 'alert-on' : ''}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        ${plan.date} ${plan.time}
+      </span>`;
+    }
+
+    let actionBtns = '';
+    if (plan.status === 'pending') {
+      actionBtns = `<button class="plan-action-btn start" onclick="startCooking(${plan.id},event)">Start Cooking</button>`;
+    } else if (plan.status === 'cooking') {
+      actionBtns = `<button class="plan-action-btn" onclick="markDone(${plan.id},event)">Mark Done</button>`;
+    }
+    actionBtns += `<button class="plan-action-btn danger" onclick="deletePlan(${plan.id},event)">Delete</button>`;
+
+    div.innerHTML = `
+      <div class="plan-item-head" onclick="togglePlanBody(${plan.id})">
+        <div class="plan-item-left">
+          <div class="plan-status-dot ${dotClass}" title="${statusLabel}"></div>
+          <div>
+            <div class="plan-name-text">${escHTML(plan.name)}</div>
+            <div class="plan-meta">${timeTag}
+              <span class="plan-tag">${plan.items.length} ingredient${plan.items.length!==1?'s':''}</span>
+              <span class="plan-tag">${statusLabel}</span>
+            </div>
+          </div>
+        </div>
+        <div class="plan-item-actions">${actionBtns}</div>
+      </div>
+      <div class="plan-body" id="body-${plan.id}">
+        ${buildCountdown(plan)}
+        <div class="plan-chips">
+          ${plan.items.map(i => `<div class="plan-chip">${i.emoji && i.emoji!=='__MISE_LOGO__'?i.emoji:'🍽'} ${escHTML(i.name)}<em>${escHTML(i.qty)}</em></div>`).join('')}
+        </div>
+        ${plan.notes ? `<div class="plan-notes">${escHTML(plan.notes)}</div>` : ''}
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function buildCountdown(plan) {
+  if (!plan.date || !plan.time) return '';
+  const target = new Date(plan.date + 'T' + plan.time);
+  const now = new Date();
+  const diff = target - now;
+  if (diff <= 0 && plan.status !== 'done') {
+    return `<div class="countdown-bar overdue">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span class="countdown-text">OVERDUE — Was scheduled for ${plan.time}</span>
+    </div>`;
+  }
+  const hrs  = Math.floor(diff / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
+  const label = diff < 3600000
+    ? `in ${mins} minute${mins!==1?'s':''}`
+    : `in ${hrs}h ${mins}m`;
+  return `<div class="countdown-bar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span class="countdown-text">PREP SCHEDULED ${label.toUpperCase()} · ${plan.time}</span>
+  </div>`;
+}
+
+function togglePlanBody(id) {
+  const body = document.getElementById('body-' + id);
+  if (body) body.classList.toggle('open');
+}
+
+function startCooking(id, e) {
+  e.stopPropagation();
+  const plan = plans.find(p => p.id === id);
+  if (!plan) return;
+  plan.status = 'cooking';
+  localStorage.setItem('mise_plans', JSON.stringify(plans));
+  renderPlans();
+  showToast(`🍳 Started cooking "${plan.name}"!`);
+}
+
+function markDone(id, e) {
+  e.stopPropagation();
+  const plan = plans.find(p => p.id === id);
+  if (!plan) return;
+  plan.status = 'done';
+  localStorage.setItem('mise_plans', JSON.stringify(plans));
+  renderPlans();
+  showToast(`✅ "${plan.name}" complete!`);
+}
+
+function deletePlan(id, e) {
+  e.stopPropagation();
+  const plan = plans.find(p => p.id === id);
+  plans = plans.filter(p => p.id !== id);
+  localStorage.setItem('mise_plans', JSON.stringify(plans));
+  renderPlans();
+  if (plan) showToast(`🗑 "${plan.name}" deleted`);
+}
+
+function clearAllPlans() {
+  if (!plans.length) return;
+  plans = [];
+  localStorage.setItem('mise_plans', JSON.stringify(plans));
+  renderPlans();
+  showToast('Cleared all plans');
+}
+
+// ═══════════════════════════════════════════
+//  ALERT SCHEDULER
+// ═══════════════════════════════════════════
+function scheduleAlert(plan) {
+  const target = new Date(plan.date + 'T' + plan.time);
+  const delay  = target - new Date();
+  if (delay <= 0) return;
+  const t = setTimeout(() => fireAlert(plan), delay);
+  alertTimers.push(t);
+}
+
+function fireAlert(plan) {
+  document.getElementById('alert-title').textContent = `⏰ Time to cook: ${plan.name}`;
+  document.getElementById('alert-sub').textContent = `Your ingredients are ready: ${plan.items.slice(0,3).map(i=>i.name).join(', ')}${plan.items.length>3?'…':''}`;
+  const notif = document.getElementById('alert-notif');
+  notif.classList.add('show');
+  // Browser notification
+  if (Notification.permission === 'granted') {
+    new Notification(`Mise AI — Time to cook!`, { body: plan.name, icon: '' });
+  }
+  setTimeout(() => notif.classList.remove('show'), 8000);
+}
+
+function dismissAlert() {
+  document.getElementById('alert-notif').classList.remove('show');
+}
+
+// Request notification permission on load
+if ('Notification' in window && Notification.permission === 'default') {
+  Notification.requestPermission();
+}
+
+// Reschedule all pending alert plans on load
+function rescheduleAlerts() {
+  plans.forEach(p => {
+    if (p.alertEnabled && p.status === 'pending' && p.date && p.time) {
+      scheduleAlert(p);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════
+//  AI CHAT DRAWER
+// ═══════════════════════════════════════════
+function openDrawer() {
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.getElementById('chat-input').focus();
+}
+
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+}
+
+function sendSuggestion(btn) {
+  document.getElementById('chat-input').value = btn.textContent;
+  sendChat();
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text  = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  addMsg('user', text);
+  chatHistory.push({ role:'user', content: text });
+
+  const indicator = addTyping();
+  callAI(text, indicator);
+}
+
+function addMsg(role, text) {
+  const area = document.getElementById('chat-area');
+  const div  = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.textContent = text;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+  return div;
+}
+
+function addTyping() {
+  const area = document.getElementById('chat-area');
+  const div  = document.createElement('div');
+  div.className = 'msg ai typing';
+  div.innerHTML = '<div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>';
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+  return div;
+}
+
+async function callAI(userMsg, indicator) {
+  const ingList = selectedItems.length
+    ? selectedItems.map(i => `${i.name} (${i.qty})`).join(', ')
+    : 'No ingredients selected yet';
+
+  const planName = document.getElementById('plan-name').value.trim();
+
+  const systemPrompt = `You are Mise AI, a warm and expert culinary assistant.
+
+The user is planning a meal. Here is their current context:
+- Selected ingredients: ${ingList}
+- Meal plan name: ${planName || 'Not named yet'}
+
+Help them with recipes, cooking techniques, timing, substitutions, or any food-related questions.
+Be concise (2-4 sentences unless a longer answer is clearly needed), friendly, and practical.
+If they ask what they can cook, suggest something based on THEIR specific ingredients.`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        system: systemPrompt,
+        messages: chatHistory
+      })
+    });
+
+    const data = await resp.json();
+    const reply = data?.content?.[0]?.text || 'Sorry, I couldn\'t get a response. Please try again.';
+    indicator.remove();
+    addMsg('ai', reply);
+    chatHistory.push({ role:'assistant', content: reply });
+    // Keep context window manageable
+    if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+
+  } catch(err) {
+    indicator.remove();
+    addMsg('ai', 'Connection issue — please check your network and try again.');
+  }
+}
+
+// ═══════════════════════════════════════════
+//  ENTER KEY — chat
+// ═══════════════════════════════════════════
+document.getElementById('chat-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); sendChat(); }
+});
+
+// ═══════════════════════════════════════════
+//  SET DEFAULT DATE TO TODAY
+// ═══════════════════════════════════════════
+function setDefaultDate() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('plan-date').value = today;
+  // Default time 30 mins from now
+  const t = new Date(); t.setMinutes(t.getMinutes() + 30);
+  const hh = String(t.getHours()).padStart(2,'0');
+  const mm = String(t.getMinutes()).padStart(2,'0');
+  document.getElementById('plan-time').value = `${hh}:${mm}`;
+}
+
+// ═══════════════════════════════════════════
+//  COUNTDOWN REFRESH every 30s
+// ═══════════════════════════════════════════
+setInterval(() => { if (plans.length) renderPlans(); }, 30000);
+
+// ═══════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ═══════════════════════════════════════════
+//  NAV
+// ═══════════════════════════════════════════
+function goBack() {
+  if (document.referrer) window.history.back();
+  else window.location.href = 'inventory.html';
+}
+
+// ═══════════════════════════════════════════
+//  ESCAPE HTML
+// ═══════════════════════════════════════════
+function escHTML(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+loadSelectedItems();
+setDefaultDate();
+renderPlans();
+rescheduleAlerts();
+</script>
+</body>
+</html>
