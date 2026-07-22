@@ -313,6 +313,28 @@
       });
     })();
   </script>
+  <script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+  const SUPABASE_URL = "https://your-project.supabase.co";
+  const SUPABASE_KEY = "your-anon-key";
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (!session) {
+      window.location.href = 'index.html';
+    } else {
+      window.MiseUser = session.user;
+      if (typeof window.renderMiseUser === 'function') window.renderMiseUser(session.user);
+    }
+  });
+
+  window.MiseAuth = {
+    async logOut() {
+      await supabase.auth.signOut();
+    }
+  };
+</script>
 
   <script src="mise-ai.js"></script>
 </body>
