@@ -1119,6 +1119,50 @@ function resetForgot() {
   setErr('fp-email-f', false);
 }
 const origGoTo = goTo;
+<script>
+   <script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+  // --- CONFIGURATION: Replace with your Supabase Keys ---
+  const SUPABASE_URL = "https://your-project.supabase.co";
+  const SUPABASE_KEY = "your-anon-key";
+  // ------------------------------------------------------
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Check if user is already logged in
+  async function checkSession() {
+    const { data } = await supabase.auth.getSession();
+    if (data.session) window.location.href = 'mise-ai.html';
+  }
+  checkSession();
+
+  window.MiseAuth = {
+    async signInWithGoogle() {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin + '/mise-ai.html' }
+      });
+      if (error) throw error;
+    },
+    async login(email, password) {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      return data.user;
+    },
+    async signup(name, email, password) {
+      const { data, error } = await supabase.auth.signUp({
+        email, password,
+        options: { data: { full_name: name } }
+      });
+      if (error) throw error;
+      return data.user;
+    },
+    async sendPasswordReset(email) {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) throw error;
+    }
+  };
 </script>
 
 </body>
