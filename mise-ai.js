@@ -38,7 +38,7 @@ const ICONS = {
    ============================================================ */
 
 const AI_CONFIG = {
-    apiKey: "YOUR_ANTHROPIC_API_KEY", // Get from console.anthropic.com
+    apiKey: "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", // Get from console.anthropic.com
     endpoint: "https://api.anthropic.com/v1/messages",
     model: "claude-3-5-sonnet-20240620"
 };
