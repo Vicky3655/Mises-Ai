@@ -222,46 +222,19 @@ function addTypingIndicator() {
 /* ── ANTHROPIC API ───────────────────────────────────────── */
 async function askAI() {
   state.isAIThinking = true;
-  setStatus('Mise AI is thinking…');
+  setStatus('Mise AI is thinking...');
   const indicators = addTypingIndicator();
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: `You are Mise AI, a warm and knowledgeable culinary assistant.
-Help users with cooking, recipes, ingredients, substitutions, and meal planning.
-Keep replies concise and conversational — 2 to 4 sentences unless a longer answer is clearly needed.
-Speak naturally as if chatting, not bullet-pointing a lecture.`,
-        messages: state.chatMessages
-      })
-    });
-
-    const data = await res.json();
+    const reply = await fetchAIResponse(state.chatMessages[state.chatMessages.length - 1].content);
     indicators.forEach(el => el.remove());
-
-    if (data.content?.[0]?.text) {
-      const reply = data.content[0].text;
-      state.chatMessages.push({ role: 'assistant', content: reply });
-      addMsg('ai', reply);
-      speakReply(reply);
-    } else if (data.error) {
-      addMsg('ai', `API error: ${data.error.message || 'Unknown error'}. Check your API key.`);
-    } else {
-      addMsg('ai', 'Sorry, I couldn\'t get a response. Please try again.');
-    }
-
+    addMsg('ai', reply);
+    speakReply(reply); // TTS is already in your file
   } catch (err) {
     indicators.forEach(el => el.remove());
-    addMsg('ai', 'Connection issue — please check your network and try again.');
-    console.error('API error:', err);
+    addMsg('ai', "I couldn't reach the AI. Check your connection.");
   }
-
   state.isAIThinking = false;
-  setStatus('');
 }
 
 /* ── TEXT TO SPEECH ──────────────────────────────────────── */
