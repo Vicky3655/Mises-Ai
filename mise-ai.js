@@ -33,21 +33,98 @@ const ICONS = {
 };
 
 /* ── AI RESPONSES ────────────────────────────────────────── */
-const AI_RESPONSES = {
-  default: [
-    "Great question! Let me help you with that. Nigerian cuisine is incredibly rich — I can walk you through ingredients, steps, and even substitutions if needed.",
-    "I've got you covered! Here are some thoughts on that. Feel free to ask for more detail on any step.",
-    "That's a wonderful choice! I can suggest the best approach based on what's typically available and most flavourful.",
-    "Absolutely! This is one of my favourite topics. Let me break it down for you clearly.",
-  ],
-  jollof: "Jollof Rice is a West African classic! You'll need: long-grain parboiled rice, tomatoes, red bell peppers, scotch bonnet pepper, onions, tomato paste, chicken or vegetable stock, seasoning cubes, thyme, bay leaves, and vegetable oil. Optional: smoked paprika and curry powder for extra depth. Would you like the full step-by-step recipe?",
-  afternoon: "For a satisfying afternoon meal, I'd suggest: Fried Rice with Chicken, Jollof Spaghetti, Pepper Soup with yam, Beans and Plantain, or a light Noodles stir-fry. What ingredients do you currently have on hand? I can tailor my suggestion!",
-  amala: "To make Amala (Yam flour swallow) you need: Elubo (dried yam flour), hot boiling water, and optionally a pinch of potash for a darker colour. The key is gradually pouring the flour into the boiling water while stirring vigorously to avoid lumps. Typically served with Ewedu soup and Gbegiri (bean soup). Want the full recipe?",
-  plantain: "For perfectly crispy fried plantain: use ripe (yellow with black spots) plantains for sweetness, or unripe green ones for a savoury version. Slice diagonally, heat vegetable oil to 170°C, fry 3–4 minutes per side until golden. Season with a touch of salt. The secret is oil temperature — too cool and they absorb oil, too hot and they burn!",
-  breakfast: "Quick Nigerian breakfast ideas: Akara (bean cakes) with pap, Bread and egg sauce, Ogi (cornmeal porridge), Plantain and egg, or Indomie noodles with vegetables and egg. All ready in under 20 minutes! Which one catches your eye?",
-  pepper: "Pepper soup spice blend: Ehuru (calabash nutmeg), Uda (negro pepper), Utazi leaves, Uziza leaves, crayfish, scotch bonnet, and stock cubes. You can buy pre-mixed pepper soup spice at most Nigerian stores. The ehuru and uda are the soul of the flavour — don't skip them!",
+/* ============================================================
+   MISE AI | Real AI Model + Vision Implementation
+   ============================================================ */
+
+const AI_CONFIG = {
+    apiKey: "YOUR_ANTHROPIC_API_KEY", // Get from console.anthropic.com
+    endpoint: "https://api.anthropic.com/v1/messages",
+    model: "claude-3-5-sonnet-20240620"
 };
 
+// 1. Updated AI response logic
+async function fetchAIResponse(text, base64Image = null) {
+    let content = [];
+    if (base64Image) {
+        content.push({
+            type: "image",
+            source: { type: "base64", media_type: "image/jpeg", data: base64Image.split(',')[1] }
+        });
+        content.push({ type: "text", text: "Identify these food items and suggest a Nigerian recipe." });
+    } else {
+        content = text;
+    }
+
+    const response = await fetch(AI_CONFIG.endpoint, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "x-api-key": AI_CONFIG.apiKey,
+            "anthropic-version": "2023-06-01",
+            "dangerously-allow-browser": "true" 
+        },
+        body: JSON.stringify({
+            model: AI_CONFIG.model,
+            max_tokens: 1024,
+            system: "You are Mise AI, a master Nigerian chef. Help clients plan meals. Be efficient and warm. Use terms like 'Oga', 'Madam', and 'Correct spice'.",
+            messages: [{ role: "user", content: content }]
+        })
+    });
+    const data = await response.json();
+    return data.content[0].text;
+}
+
+// 2. Updated Send Message
+async function sendMessage(text) {
+    if (!text || state.isTyping) return;
+    appendMessage('user', text);
+    state.isTyping = true;
+    const typingEl = appendTyping();
+
+    try {
+        const reply = await fetchAIResponse(text);
+        typingEl.remove();
+        appendMessage('ai', reply);
+    } catch (err) {
+        typingEl.remove();
+        appendMessage('ai', "I had a glitch in the kitchen. Please check your API key.");
+    }
+    state.isTyping = false;
+}
+
+// 3. Image Scanning Logic
+function initImageScanner() {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = async (f) => {
+            appendMessage('user', "Scanning these ingredients...");
+            const typingEl = appendTyping();
+            const reply = await fetchAIResponse(null, f.target.result);
+            typingEl.remove();
+            appendMessage('ai', reply);
+        };
+        reader.readAsDataURL(file);
+    };
+    
+    // Link to all scan buttons
+    document.querySelectorAll('#qaScan, [data-tab="scan"]').forEach(btn => {
+        btn.onclick = () => fileInput.click();
+    });
+}
+
+// Update renderMiseUser for Supabase
+function renderMiseUser(user) {
+  const meta = user.user_metadata || {};
+  const displayName = meta.full_name || user.email;
+  const firstName = displayName.split(' ')[0];
+  document.getElementById('userFirstName').textContent = firstName;
+  document.getElementById('avatarBtn').src = meta.avatar_url || initialsAvatar(displayName);
+}
 /* ── DOM CACHE ───────────────────────────────────────────── */
 let dom = {};
 
