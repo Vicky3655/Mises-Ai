@@ -76,10 +76,7 @@ async function sendMessage(text) {
   state.isTyping = false;
 }
 
-/* ── USER RENDERING ──────────────────────────────────────────
-   Reads full_name/avatar_url straight from the session's
-   user_metadata (set at signup — see supabase-client.js's
-   MiseAuth.signup). No extra DB round trip needed for this. */
+/* ── USER RENDERING ────────────────────────────────────────── */
 function renderMiseUser(user) {
   const meta = user.user_metadata || {};
   const displayName = meta.full_name || user.email || 'Chef';
@@ -113,7 +110,7 @@ let dom = {};
 
 function cacheDOM() {
   const ids = [
-    'chatInput', 'sendBtn', 'messagesArea', 'historyList',
+    'chatInput', 'sendBtn', 'voiceChatBtn', 'messagesArea', 'historyList',
     'toast', 'notifBadge', 'notifBtn', 'avatarBtn',
     'chatCountStat', 'totalChats',
     'qaSmartChat', 'qaVoice', 'qaScan', 'qaVideo',
@@ -270,28 +267,35 @@ function setupCards() {
 function setupChatInput() {
   const input = dom['chatInput'];
   const send  = dom['sendBtn'];
+  const mic   = dom['voiceChatBtn'];
 
-  if (!input || !send) return;
-
-  send.addEventListener('click', () => {
-    sendMessage(input.value);
-    input.value = '';
-  });
-
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
+  if (send && input) {
+    send.addEventListener('click', () => {
       sendMessage(input.value);
       input.value = '';
-    }
-  });
+    });
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage(input.value);
+        input.value = '';
+      }
+    });
+  }
+
+  if (mic) {
+    mic.addEventListener('click', () => {
+      window.location.href = 'voice_redesign.html';
+    });
+  }
 }
 
 /* ── QUICK ACTIONS ───────────────────────────────────────── */
 function setupQuickActions() {
   const actions = {
     qaSmartChat: () => { dom['chatInput'].focus(); showToast('💬 Smart Chat ready — type your question!'); },
-    qaVoice:     () => showToast('🎙️ Voice input coming soon!'),
+    qaVoice:     () => { window.location.href = 'voice_redesign.html'; },
     qaScan:      () => { sendMessage('I want to scan an image of food or ingredients for AI analysis'); },
     qaVideo:     () => showToast('📹 Video mode coming soon!'),
   };
@@ -335,7 +339,7 @@ function setGreeting() {
 /* ── INIT ────────────────────────────────────────────────── */
 async function init() {
   const session = await window.MiseAuth.requireSession('mise_ai_auth_v2.html');
-  if (!session) return; // already redirecting to login
+  if (!session) return;
   window.MiseUser = session.user;
 
   cacheDOM();
