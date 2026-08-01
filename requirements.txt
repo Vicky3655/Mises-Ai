@@ -2,4 +2,3 @@ flask
 flask-cors
 pillow
 requests
-ultralytics
