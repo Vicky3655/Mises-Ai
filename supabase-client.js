@@ -22,8 +22,8 @@
   // Same project the app already referenced in mise_ai_auth_v2.html / mise-ai.html.
   // The anon/publishable key is safe to ship client-side — it only ever acts
   // within the Row Level Security policies defined in schema.sql.
-  const SUPABASE_URL      = 'https://iqbshtnfjcqxexrkfkke.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_B5m0WuRzP9mj_icIpoh4vg_FN-2EHlY';
+  const SUPABASE_URL      = 'https://gnurpzrlrerwjuxnlzcz.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_Mb1BqkqjO3RGWa9dMu9WWw_0LeIrS9D';
 
   if (!window.supabase || typeof window.supabase.createClient !== 'function') {
     console.error(
