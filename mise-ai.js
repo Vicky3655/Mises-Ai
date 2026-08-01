@@ -5,22 +5,15 @@
 /* ── STATE ───────────────────────────────────────────────── */
 const state = {
   chatCount:   0,
-  totalChats:  7,
+  totalChats:  0,
   notifCount:  2,
   toastTimer:  null,
   isTyping:    false,
+  isListening: false,
 };
 
-/* ── HISTORY DATA ────────────────────────────────────────── */
-const HISTORY = [
-  { title: 'Ingredients For Making Jollof Rice',    meta: 'Today, 8:42 PM',  icon: 'bowl' },
-  { title: 'What Can I Cook For An Afternoon Meal?',meta: 'Today, 4:15 PM',  icon: 'clock' },
-  { title: 'What Must I Have To Make Amala?',       meta: 'Today, 1:30 PM',  icon: 'bowl' },
-  { title: 'Best way to season Egusi soup',         meta: 'Yesterday',        icon: 'leaf' },
-  { title: 'Suya marinade recipe',                  meta: 'Yesterday',        icon: 'flame' },
-  { title: 'How to make crispy plantain',           meta: '2 days ago',       icon: 'chef' },
-  { title: 'Scanned: Tomato & pepper blend',        meta: '3 days ago',       icon: 'scan' },
-];
+let recognition = null;
+const STORAGE_KEY = 'mise_ai_chat_history';
 
 /* Icon SVG map */
 const ICONS = {
@@ -32,11 +25,39 @@ const ICONS = {
   scan:  `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 3.75H6A2.25 2.25 0 0 0 3.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0 1 20.25 6v1.5m0 9V18A2.25 2.25 0 0 1 18 20.25h-1.5m-9 0H6A2.25 2.25 0 0 1 3.75 18v-1.5M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>`,
 };
 
-/* ── AI CHAT ─────────────────────────────────────────────────
-   Routed through the `chat` Supabase Edge Function (see
-   supabase/functions/chat/index.ts) instead of calling
-   api.anthropic.com directly. The API key now lives server-side
-   as a Supabase secret — it is never present in this file. */
+/* ── HISTORY STORAGE HELPERS ──────────────────────────────── */
+function loadSavedHistory() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch (e) {
+    console.warn('[history] load failed:', e);
+    return [];
+  }
+}
+
+function saveHistoryToStorage(item) {
+  const history = loadSavedHistory();
+  history.unshift(item);
+  if (history.length > 30) history.pop(); // keep last 30
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  } catch (e) {
+    console.warn('[history] save failed:', e);
+  }
+}
+
+function getIconForText(text) {
+  const t = text.toLowerCase();
+  if (t.includes('scan') || t.includes('image') || t.includes('photo')) return 'scan';
+  if (t.includes('fry') || t.includes('suya') || t.includes('grill')) return 'flame';
+  if (t.includes('spice') || t.includes('herb') || t.includes('season')) return 'leaf';
+  if (t.includes('recipe') || t.includes('cook') || t.includes('chef')) return 'chef';
+  if (t.includes('time') || t.includes('quick') || t.includes('morning')) return 'clock';
+  return 'bowl';
+}
+
+/* ── AI CHAT ───────────────────────────────────────────────── */
 async function fetchAIResponse(text) {
   const { data, error } = await window.sb.functions.invoke('chat', {
     body: {
@@ -56,10 +77,11 @@ async function sendMessage(text) {
 
   appendMessage('user', text);
   state.chatCount++;
-  state.totalChats++;
-  if (dom['chatCountStat']) dom['chatCountStat'].textContent = state.chatCount;
-  if (dom['totalChats'])    dom['totalChats'].textContent    = state.totalChats;
+  
+  // Save & update history
   addHistoryItem(text);
+
+  if (dom['chatCountStat']) dom['chatCountStat'].textContent = state.chatCount;
 
   state.isTyping = true;
   const typingEl = appendTyping();
@@ -185,12 +207,25 @@ function scrollBottom() {
   if (top) setTimeout(() => { top.scrollTop = top.scrollHeight; }, 50);
 }
 
-/* ── HISTORY ─────────────────────────────────────────────── */
+/* ── HISTORY RENDERING & MANAGEMENT ─────────────────────── */
 function buildHistory() {
   const list = dom['historyList'];
   if (!list) return;
   list.innerHTML = '';
-  HISTORY.forEach(item => {
+  
+  const savedHistory = loadSavedHistory();
+  state.totalChats = savedHistory.length;
+  if (dom['totalChats']) dom['totalChats'].textContent = state.totalChats;
+
+  if (savedHistory.length === 0) {
+    list.innerHTML = `
+      <div class="empty-history" style="text-align:center; padding: 28px 12px; color: var(--muted); font-size: 12.5px; line-height: 1.5;">
+        No conversations yet.<br>Start chatting to save history!
+      </div>`;
+    return;
+  }
+
+  savedHistory.forEach(item => {
     const el = createHistoryItem(item.title, item.meta, item.icon);
     list.appendChild(el);
   });
@@ -199,8 +234,21 @@ function buildHistory() {
 function addHistoryItem(title) {
   const list = dom['historyList'];
   if (!list) return;
-  const el = createHistoryItem(title, 'Just now', 'bowl');
+
+  const emptyMsg = list.querySelector('.empty-history');
+  if (emptyMsg) emptyMsg.remove();
+
+  const iconKey = getIconForText(title);
+  const timeStr = 'Today, ' + nowTime();
+  const newItem = { title, meta: timeStr, icon: iconKey };
+
+  saveHistoryToStorage(newItem);
+
+  const el = createHistoryItem(title, timeStr, iconKey);
   list.insertBefore(el, list.firstChild);
+
+  state.totalChats = loadSavedHistory().length;
+  if (dom['totalChats']) dom['totalChats'].textContent = state.totalChats;
 }
 
 function createHistoryItem(title, meta, iconKey) {
@@ -220,7 +268,7 @@ function createHistoryItem(title, meta, iconKey) {
   el.addEventListener('click', () => {
     dom['chatInput'].value = title;
     dom['chatInput'].focus();
-    showToast('📖 ' + title);
+    showToast('📖 Prompt loaded: ' + title);
   });
   el.addEventListener('keydown', e => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
@@ -263,39 +311,109 @@ function setupCards() {
   });
 }
 
+/* ── VOICE INPUT (SPEECH RECOGNITION INTEGRATION) ────────── */
+function setupVoiceInput() {
+  const micBtn = dom['voiceChatBtn'];
+  const input  = dom['chatInput'];
+  if (!micBtn || !input) return;
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    micBtn.addEventListener('click', () => {
+      showToast('🎙️ Speech recognition is not supported on your browser.');
+    });
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+
+  recognition.onstart = () => {
+    state.isListening = true;
+    micBtn.classList.add('listening');
+    micBtn.setAttribute('title', 'Listening... Click to stop');
+    showToast('🎙️ Listening... Speak your question into the microphone');
+  };
+
+  recognition.onresult = (event) => {
+    let transcript = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      transcript += event.results[i][0].transcript;
+    }
+    input.value = transcript;
+  };
+
+  recognition.onerror = (event) => {
+    console.warn('[mise-ai voice] recognition error:', event.error);
+    stopVoiceListening();
+    if (event.error !== 'no-speech') {
+      showToast('⚠️ Voice error: ' + event.error);
+    }
+  };
+
+  recognition.onend = () => {
+    stopVoiceListening();
+    if (input.value.trim()) {
+      showToast('✨ Voice captured! Click send or press Enter.');
+    }
+  };
+
+  micBtn.addEventListener('click', () => {
+    if (state.isListening) {
+      recognition.stop();
+    } else {
+      try {
+        recognition.start();
+      } catch (err) {
+        console.error('Failed to start speech recognition:', err);
+      }
+    }
+  });
+}
+
+function stopVoiceListening() {
+  state.isListening = false;
+  const micBtn = dom['voiceChatBtn'];
+  if (micBtn) {
+    micBtn.classList.remove('listening');
+    micBtn.setAttribute('title', 'Voice Chat');
+  }
+}
+
 /* ── CHAT INPUT ──────────────────────────────────────────── */
 function setupChatInput() {
   const input = dom['chatInput'];
   const send  = dom['sendBtn'];
-  const mic   = dom['voiceChatBtn'];
 
-  if (send && input) {
-    send.addEventListener('click', () => {
+  if (!input || !send) return;
+
+  send.addEventListener('click', () => {
+    if (state.isListening && recognition) recognition.stop();
+    sendMessage(input.value);
+    input.value = '';
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (state.isListening && recognition) recognition.stop();
       sendMessage(input.value);
       input.value = '';
-    });
-
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage(input.value);
-        input.value = '';
-      }
-    });
-  }
-
-  if (mic) {
-    mic.addEventListener('click', () => {
-      window.location.href = 'voice_redesign.html';
-    });
-  }
+    }
+  });
 }
 
 /* ── QUICK ACTIONS ───────────────────────────────────────── */
 function setupQuickActions() {
   const actions = {
     qaSmartChat: () => { dom['chatInput'].focus(); showToast('💬 Smart Chat ready — type your question!'); },
-    qaVoice:     () => { window.location.href = 'voice_redesign.html'; },
+    qaVoice:     () => {
+      const micBtn = dom['voiceChatBtn'];
+      if (micBtn) micBtn.click();
+    },
     qaScan:      () => { sendMessage('I want to scan an image of food or ingredients for AI analysis'); },
     qaVideo:     () => showToast('📹 Video mode coming soon!'),
   };
@@ -348,6 +466,7 @@ async function init() {
   buildHistory();
   setupNavTabs();
   setupCards();
+  setupVoiceInput();
   setupChatInput();
   setupQuickActions();
   setupNotifications();
