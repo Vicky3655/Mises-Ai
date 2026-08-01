@@ -86,8 +86,6 @@ body {
   width: 120px; height: auto;
 }
 
-
-
 .nav-center {
   display: flex;
   gap: 4px;
@@ -241,9 +239,6 @@ body {
   gap: 6px;
 }
 .qa-block a { text-decoration: none; }
-
-
-
 
 .qa-btn {
   display: flex;
@@ -513,9 +508,6 @@ body {
   object-fit: cover;
   flex-shrink: 0;
   border: 1px solid var(--border);
-  
-  
-  
 }
 
 .msg-body { max-width: 72%; }
@@ -587,7 +579,7 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 99px;
-  padding: 10px 18px;
+  padding: 10px 14px 10px 18px;
   transition: border-color .2s;
 }
 
@@ -606,6 +598,36 @@ body {
 }
 
 .chat-input::placeholder { color: var(--muted); }
+
+/* Voice Chat Microphone Button */
+.chat-mic-btn {
+  background: transparent;
+  border: none;
+  color: var(--sub);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: color 0.2s, background 0.2s, transform 0.15s;
+  flex-shrink: 0;
+}
+
+.chat-mic-btn svg {
+  width: 19px;
+  height: 19px;
+}
+
+.chat-mic-btn:hover {
+  color: var(--orange);
+  background: rgba(232, 97, 26, 0.15);
+}
+
+.chat-mic-btn:active {
+  transform: scale(0.92);
+}
 
 .chat-send {
   width: 40px;
@@ -886,7 +908,6 @@ body {
 .mobile-brand-text img {
   width: 85px;
   height: auto;
-  
 }
 
 /* Close button */
