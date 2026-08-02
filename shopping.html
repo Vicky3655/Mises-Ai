@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Shopping List — Mise AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shopping.css">
+</head>
+<body>
+
+  <!-- DESKTOP LAYOUT (≥ 900px) -->
+  <div class="desktop-layout">
+    <aside class="d-sidebar">
+      <div class="d-brand">
+        <div class="d-brand-logo">
+          <img src="mise_ai_logo.png" alt="Mise AI"/>
+        </div>
+        <div class="d-brand-text">
+          <span class="d-brand-name"><img src="image.png" alt="Mise AI"></span>
+          <span class="d-brand-sub">Grocery Manager</span>
+        </div>
+      </div>
+
+      <nav class="d-nav">
+        <a class="d-nav-item" href="mise-ai.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          Home
+        </a>
+        <a class="d-nav-item" href="inventory.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+          Inventory
+        </a>
+        <a class="d-nav-item active" href="shopping.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          Shopping List
+          <span class="d-nav-badge" id="dCartCount">0</span>
+        </a>
+        <a class="d-nav-item" href="kitchen.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          My Kitchen
+        </a>
+      </nav>
+
+      <div class="d-quick">
+        <button class="d-quick-btn primary" id="dOrderMallBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          Order From Supermarket 🛒
+        </button>
+      </div>
+    </aside>
+
+    <main class="d-main">
+      <div class="d-topbar">
+        <div>
+          <h1 class="d-page-title">Grocery Shopping List</h1>
+          <span class="d-page-sub">Compile items, auto-sync missing ingredients, or order online</span>
+        </div>
+        <button class="cta-order-btn" id="dTopOrderBtn">
+          🛒 Send List To Mall / Delivery
+        </button>
+      </div>
+
+      <div class="d-content">
+        <!-- Quick add input -->
+        <div class="add-bar">
+          <input type="text" id="addItemInput" placeholder="Add an item (e.g., 2 kg Fresh Tomatoes, 1 L Palm Oil)…" autocomplete="off">
+          <select id="categorySelect">
+            <option value="Produce">🥦 Produce</option>
+            <option value="Proteins">🥩 Meat & Fish</option>
+            <option value="Spices">🌶️ Spices & Oils</option>
+            <option value="Pantry">🫙 Pantry & Staples</option>
+            <option value="Dairy">🥛 Dairy & Bakery</option>
+          </select>
+          <button id="addBtn">Add Item</button>
+        </div>
+
+        <!-- List container -->
+        <div id="shoppingListContainer" class="shopping-list-container"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MOBILE LAYOUT (< 900px) -->
+  <div class="mobile-layout">
+    <header class="topbar">
+      <button class="back-btn" onclick="history.back()">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="2.4" stroke="currentColor"><path d="M15.75 19.5 8.25 12l7.5-7.5"/></svg>
+      </button>
+      <h1 class="topbar-title">Shopping List</h1>
+      <button class="m-order-icon-btn" id="mOrderBtn" aria-label="Order items">🛒</button>
+    </header>
+
+    <main class="content">
+      <div class="add-bar m-add-bar">
+        <input type="text" id="mAddItemInput" placeholder="Add grocery item…">
+        <button id="mAddBtn">＋</button>
+      </div>
+
+      <div id="mShoppingListContainer" class="shopping-list-container"></div>
+    </main>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="m-bottom-nav">
+      <a class="m-nav-item" href="mise-ai.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        <span>Home</span>
+      </a>
+      <a class="m-nav-item" href="inventory.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+        <span>Inventory</span>
+      </a>
+      <a class="m-nav-item active" href="shopping.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span>Shopping</span>
+      </a>
+      <a class="m-nav-item" href="kitchen.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        <span>Kitchen</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- ORDER / SUPERMARKET MODAL -->
+  <div class="modal-overlay" id="storeModalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Order From Supermarket 🛒</h3>
+        <button class="modal-close" id="closeStoreModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-sub">Select your preferred delivery service or mall partner to export your <strong id="modalItemCount">0 items</strong>:</p>
+        
+        <div class="store-grid">
+          <!-- Option 1: Chowdeck -->
+          <div class="store-card" onclick="triggerStoreCheckout('chowdeck')">
+            <div class="store-icon">🚀</div>
+            <div class="store-info">
+              <h4>Chowdeck Supermarket</h4>
+              <p>Instant delivery from Shoprite, Spar, or Addide</p>
+            </div>
+            <span class="store-arrow">↗</span>
+          </div>
+
+          <!-- Option 2: Jumia Foods / Grocery -->
+          <div class="store-card" onclick="triggerStoreCheckout('jumia')">
+            <div class="store-icon">📦</div>
+            <div class="store-info">
+              <h4>Jumia Grocery</h4>
+              <p>Search & bulk order ingredients online</p>
+            </div>
+            <span class="store-arrow">↗</span>
+          </div>
+
+          <!-- Option 3: WhatsApp Supermarket Direct -->
+          <div class="store-card" onclick="triggerStoreCheckout('whatsapp')">
+            <div class="store-icon">💬</div>
+            <div class="store-info">
+              <h4>WhatsApp Merchant Direct</h4>
+              <p>Send clean list directly to local store manager</p>
+            </div>
+            <span class="store-arrow">↗</span>
+          </div>
+
+          <!-- Option 4: Instacart (US/UK Global) -->
+          <div class="store-card" onclick="triggerStoreCheckout('instacart')">
+            <div class="store-icon">🥕</div>
+            <div class="store-info">
+              <h4>Instacart / Amazon Fresh</h4>
+              <p>Export checklist to international grocery cart</p>
+            </div>
+            <span class="store-arrow">↗</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="shopping.js"></script>
+</body>
+</html>
