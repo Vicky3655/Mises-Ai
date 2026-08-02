@@ -107,7 +107,6 @@ body {
 
 .d-sidebar::-webkit-scrollbar { display: none; }
 
-/* Ambient background glow */
 .d-sidebar::before {
   content: '';
   position: absolute;
@@ -121,7 +120,6 @@ body {
   pointer-events: none;
 }
 
-/* Sidebar Brand Header */
 .d-brand {
   display: flex;
   align-items: center;
@@ -149,7 +147,6 @@ body {
 .d-brand-name img { width: 84px; height: auto; display: block; }
 .d-brand-sub { display: block; font-size: 10px; color: rgba(255,255,255,0.38); letter-spacing: 0.06em; margin-top: 2px; }
 
-/* Sidebar Navigation Links */
 .d-nav {
   display: flex;
   flex-direction: column;
@@ -209,7 +206,6 @@ body {
   padding: 0 6px;
 }
 
-/* Sidebar Quick Action */
 .d-quick {
   padding: 16px 12px;
   margin-top: auto;
@@ -253,7 +249,6 @@ body {
 .d-main::-webkit-scrollbar { width: 6px; }
 .d-main::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
 
-/* Desktop Topbar */
 .d-topbar {
   display: flex;
   align-items: center;
@@ -405,14 +400,8 @@ body {
   border-color: var(--orange-border);
 }
 
-.shopping-item.checked {
-  opacity: 0.55;
-}
-
-.shopping-item.checked .item-text {
-  text-decoration: line-through;
-  color: var(--sub);
-}
+.shopping-item.checked { opacity: 0.55; }
+.shopping-item.checked .item-text { text-decoration: line-through; color: var(--sub); }
 
 .shopping-checkbox {
   width: 22px;
