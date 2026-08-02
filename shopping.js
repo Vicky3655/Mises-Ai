@@ -1,37 +1,39 @@
 /* ============================================================
-   MISE AI | SHOPPING LIST LOGIC & STORE EXPORT
+   MISE AI | DYNAMIC USER-DRIVEN SHOPPING LIST
    shopping.js
    ============================================================ */
 
-const STORAGE_KEY = 'mise_shopping_list_items';
+const ITEMS_STORAGE_KEY   = 'mise_shopping_items_v2';
+const CATS_STORAGE_KEY    = 'mise_user_categories_v1';
+const LIBRARY_STORAGE_KEY = 'mise_user_item_library_v1';
 
-// Initial state
-let shoppingItems = loadShoppingList();
+const DEFAULT_CATEGORIES = ['Produce', 'Meat & Seafood', 'Spices & Oils', 'Pantry & Staples', 'Dairy & Bakery'];
 
-// DOM elements
-const containerDesktop = document.getElementById('shoppingListContainer');
-const containerMobile = document.getElementById('mShoppingListContainer');
-const cartBadge = document.getElementById('dCartCount');
-const toastEl = document.getElementById('toast');
+let shoppingItems  = loadFromStorage(ITEMS_STORAGE_KEY, []);
+let userCategories = loadFromStorage(CATS_STORAGE_KEY, DEFAULT_CATEGORIES);
+let itemLibrary    = loadFromStorage(LIBRARY_STORAGE_KEY, []);
+
+const containerDesktop  = document.getElementById('shoppingListContainer');
+const containerMobile   = document.getElementById('mShoppingListContainer');
+const cartBadge         = document.getElementById('dCartCount');
+const toastEl           = document.getElementById('toast');
 const storeModalOverlay = document.getElementById('storeModalOverlay');
 
-function loadShoppingList() {
+function loadFromStorage(key, fallback) {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : [
-      { id: '1', name: 'Fresh Tomatoes (2 kg)', category: 'Produce', checked: false },
-      { id: '2', name: 'Red Palm Oil (1 Liter)', category: 'Spices', checked: false },
-      { id: '3', name: 'Red Onion (1 Bag)', category: 'Produce', checked: true },
-      { id: '4', name: 'Egusi Ground Seeds', category: 'Pantry', checked: false }
-    ];
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : fallback;
   } catch (e) {
-    return [];
+    return fallback;
   }
 }
 
-function saveShoppingList() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(shoppingItems));
-  renderShoppingList();
+function saveToStorage(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (e) {
+    console.warn('[storage] save error:', e);
+  }
 }
 
 function showToast(msg) {
@@ -41,29 +43,121 @@ function showToast(msg) {
   setTimeout(() => toastEl.classList.remove('show'), 2800);
 }
 
-// Render Categorized Shopping List
+/* ── 1. DYNAMIC CATEGORY & SUGGESTIONS POPULATION ───────── */
+
+function renderCategoryOptions() {
+  const selectEl = document.getElementById('categorySelect');
+  if (!selectEl) return;
+
+  let optionsHTML = userCategories.map(cat => 
+    `<option value="${escapeHTML(cat)}">${getCatEmoji(cat)} ${escapeHTML(cat)}</option>`
+  ).join('');
+
+  optionsHTML += `<option value="__NEW_CAT__">➕ Add New Custom Category...</option>`;
+  selectEl.innerHTML = optionsHTML;
+}
+
+function renderItemSuggestions() {
+  let datalist = document.getElementById('itemSuggestionsList');
+  if (!datalist) {
+    datalist = document.createElement('datalist');
+    datalist.id = 'itemSuggestionsList';
+    document.body.appendChild(datalist);
+  }
+
+  datalist.innerHTML = itemLibrary.map(item => 
+    `<option value="${escapeHTML(item)}"></option>`
+  ).join('');
+
+  const dInput = document.getElementById('addItemInput');
+  const mInput = document.getElementById('mAddItemInput');
+  if (dInput) dInput.setAttribute('list', 'itemSuggestionsList');
+  if (mInput) mInput.setAttribute('list', 'itemSuggestionsList');
+}
+
+/* ── 2. DYNAMIC ITEM & CATEGORY CREATION ─────────────────── */
+
+function addItem(inputEl, selectEl) {
+  const name = inputEl.value.trim();
+  if (!name) return;
+
+  let category = selectEl ? selectEl.value : userCategories[0] || 'General';
+
+  if (category === '__NEW_CAT__') {
+    const newCat = prompt('Enter name for your new category:');
+    if (newCat && newCat.trim()) {
+      category = newCat.trim();
+      if (!userCategories.includes(category)) {
+        userCategories.push(category);
+        saveToStorage(CATS_STORAGE_KEY, userCategories);
+        renderCategoryOptions();
+      }
+    } else {
+      category = userCategories[0] || 'General';
+    }
+  }
+
+  if (!itemLibrary.includes(name)) {
+    itemLibrary.push(name);
+    saveToStorage(LIBRARY_STORAGE_KEY, itemLibrary);
+    renderItemSuggestions();
+  }
+
+  shoppingItems.unshift({
+    id: 'item-' + Date.now(),
+    name: name,
+    category: category,
+    checked: false
+  });
+
+  inputEl.value = '';
+  saveToStorage(ITEMS_STORAGE_KEY, shoppingItems);
+  renderShoppingList();
+  showToast(`Added "${name}" under ${category}`);
+}
+
+function toggleItem(id) {
+  const item = shoppingItems.find(i => i.id === id);
+  if (item) {
+    item.checked = !item.checked;
+    saveToStorage(ITEMS_STORAGE_KEY, shoppingItems);
+    renderShoppingList();
+  }
+}
+
+function deleteItem(id) {
+  shoppingItems = shoppingItems.filter(i => i.id !== id);
+  saveToStorage(ITEMS_STORAGE_KEY, shoppingItems);
+  renderShoppingList();
+  showToast('Item removed');
+}
+
+/* ── 3. RENDER SHOPPING LIST UI ──────────────────────────── */
+
 function renderShoppingList() {
   const activeCount = shoppingItems.filter(i => !i.checked).length;
   if (cartBadge) cartBadge.textContent = activeCount;
 
-  const categories = ['Produce', 'Proteins', 'Spices', 'Pantry', 'Dairy'];
-  let html = '';
-
   if (shoppingItems.length === 0) {
-    html = `
-      <div style="text-align: center; padding: 40px 20px; color: var(--sub);">
-        🛒 Your shopping list is empty!<br>Type an item above to add ingredients.
+    const emptyHTML = `
+      <div style="text-align: center; padding: 48px 20px; color: var(--sub);">
+        <div style="font-size: 32px; margin-bottom: 10px;">🛒</div>
+        <h3 style="font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px;">No items found in your list</h3>
+        <p style="font-size: 13px;">Input the ingredients and food items you need to buy above.</p>
       </div>
     `;
-    if (containerDesktop) containerDesktop.innerHTML = html;
-    if (containerMobile) containerMobile.innerHTML = html;
+    if (containerDesktop) containerDesktop.innerHTML = emptyHTML;
+    if (containerMobile)  containerMobile.innerHTML  = emptyHTML;
     return;
   }
 
-  categories.forEach(cat => {
+  const presentCategories = [...new Set(shoppingItems.map(i => i.category))];
+  let html = '';
+
+  presentCategories.forEach(cat => {
     const catItems = shoppingItems.filter(i => i.category === cat);
     if (catItems.length > 0) {
-      html += `<div class="category-group"><div class="category-title">${getCatEmoji(cat)} ${cat}</div>`;
+      html += `<div class="category-group"><div class="category-title">${getCatEmoji(cat)} ${escapeHTML(cat)}</div>`;
       catItems.forEach(item => {
         html += `
           <div class="shopping-item ${item.checked ? 'checked' : ''}">
@@ -78,51 +172,25 @@ function renderShoppingList() {
   });
 
   if (containerDesktop) containerDesktop.innerHTML = html;
-  if (containerMobile) containerMobile.innerHTML = html;
+  if (containerMobile)  containerMobile.innerHTML  = html;
 }
 
 function getCatEmoji(cat) {
-  const map = { Produce: '🥦', Proteins: '🥩', Spices: '🌶️', Pantry: '🫙', Dairy: '🥛' };
-  return map[cat] || '📦';
+  const c = cat.toLowerCase();
+  if (c.includes('veggie') || c.includes('produce') || c.includes('fruit')) return '🥦';
+  if (c.includes('meat') || c.includes('fish') || c.includes('protein')) return '🥩';
+  if (c.includes('spice') || c.includes('oil') || c.includes('pepper')) return '🌶️';
+  if (c.includes('dairy') || c.includes('milk') || c.includes('bakery')) return '🥛';
+  if (c.includes('drink') || c.includes('beverage')) return '🥤';
+  return '🫙';
 }
 
 function escapeHTML(str) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// Add Item
-function addItem(inputEl, catEl) {
-  const name = inputEl.value.trim();
-  if (!name) return;
-  const category = catEl ? catEl.value : 'Produce';
+/* ── 4. STORE CHECKOUT DISPATCHER ────────────────────────── */
 
-  shoppingItems.unshift({
-    id: Date.now().toString(),
-    name: name,
-    category: category,
-    checked: false
-  });
-
-  inputEl.value = '';
-  saveShoppingList();
-  showToast(`Added "${name}" to shopping list`);
-}
-
-function toggleItem(id) {
-  const item = shoppingItems.find(i => i.id === id);
-  if (item) {
-    item.checked = !item.checked;
-    saveShoppingList();
-  }
-}
-
-function deleteItem(id) {
-  shoppingItems = shoppingItems.filter(i => i.id !== id);
-  saveShoppingList();
-  showToast('Item removed');
-}
-
-// Store Checkout / Integration Dispatcher
 function triggerStoreCheckout(platform) {
   const activeItems = shoppingItems.filter(i => !i.checked);
   
@@ -135,14 +203,12 @@ function triggerStoreCheckout(platform) {
   const itemListText = activeItems.map(i => `• ${i.name}`).join('\n');
 
   if (platform === 'whatsapp') {
-    // Connects directly to Local Supermarket WhatsApp
-    const storePhone = '2348000000000'; // Replace with Store Partner Number
-    const text = `Hello Supermarket! I would like to order the following items from Mise AI:\n\n${itemListText}\n\nPlease confirm price & delivery time.`;
+    const storePhone = '2348000000000'; // Replace with Partner Merchant Number
+    const text = `Hello Supermarket! I would like to order the following items from Mise AI:\n\n${itemListText}\n\nPlease confirm availability & total price.`;
     window.open(`https://wa.me/${storePhone}?text=${encodeURIComponent(text)}`, '_blank');
-    showToast('💬 Redirecting to WhatsApp Merchant...');
+    showToast('💬 Opening WhatsApp Merchant...');
   } 
   else if (platform === 'chowdeck') {
-    // Search deep link or partner integration link
     const query = activeItems[0]?.name || 'grocery';
     window.open(`https://chowdeck.com/search?q=${encodeURIComponent(query)}`, '_blank');
     showToast('🚀 Opening Chowdeck Supermarket...');
@@ -154,16 +220,16 @@ function triggerStoreCheckout(platform) {
   }
   else if (platform === 'instacart') {
     window.open(`https://www.instacart.com`, '_blank');
-    showToast('🥕 Opening Instacart Cart...');
+    showToast('🥕 Opening Instacart...');
   }
 
   closeModal();
 }
 
-// Modal controls
 function openModal() {
   const activeCount = shoppingItems.filter(i => !i.checked).length;
-  document.getElementById('modalItemCount').textContent = `${activeCount} item${activeCount === 1 ? '' : 's'}`;
+  const countEl = document.getElementById('modalItemCount');
+  if (countEl) countEl.textContent = `${activeCount} item${activeCount === 1 ? '' : 's'}`;
   if (storeModalOverlay) storeModalOverlay.classList.add('open');
 }
 
@@ -171,11 +237,13 @@ function closeModal() {
   if (storeModalOverlay) storeModalOverlay.classList.remove('open');
 }
 
-// Event Listeners
+/* ── 5. INITIALIZATION & EVENTS ──────────────────────────── */
+
 document.addEventListener('DOMContentLoaded', () => {
+  renderCategoryOptions();
+  renderItemSuggestions();
   renderShoppingList();
 
-  // Desktop Add
   const addBtn = document.getElementById('addBtn');
   const addItemInput = document.getElementById('addItemInput');
   const categorySelect = document.getElementById('categorySelect');
@@ -183,9 +251,25 @@ document.addEventListener('DOMContentLoaded', () => {
   if (addBtn && addItemInput) {
     addBtn.addEventListener('click', () => addItem(addItemInput, categorySelect));
     addItemInput.addEventListener('keydown', e => { if (e.key === 'Enter') addItem(addItemInput, categorySelect); });
+
+    categorySelect?.addEventListener('change', () => {
+      if (categorySelect.value === '__NEW_CAT__') {
+        const newCat = prompt('Enter custom category name:');
+        if (newCat && newCat.trim()) {
+          const formatted = newCat.trim();
+          if (!userCategories.includes(formatted)) {
+            userCategories.push(formatted);
+            saveToStorage(CATS_STORAGE_KEY, userCategories);
+            renderCategoryOptions();
+            categorySelect.value = formatted;
+          }
+        } else {
+          categorySelect.selectedIndex = 0;
+        }
+      }
+    });
   }
 
-  // Mobile Add
   const mAddBtn = document.getElementById('mAddBtn');
   const mAddItemInput = document.getElementById('mAddItemInput');
   if (mAddBtn && mAddItemInput) {
@@ -193,7 +277,6 @@ document.addEventListener('DOMContentLoaded', () => {
     mAddItemInput.addEventListener('keydown', e => { if (e.key === 'Enter') addItem(mAddItemInput, null); });
   }
 
-  // Order buttons
   document.getElementById('dOrderMallBtn')?.addEventListener('click', openModal);
   document.getElementById('dTopOrderBtn')?.addEventListener('click', openModal);
   document.getElementById('mOrderBtn')?.addEventListener('click', openModal);
