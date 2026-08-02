@@ -672,7 +672,7 @@ body {
 .search-clear.visible { display: block; }
 .search-clear:hover { color: var(--orange); }
 
-/* ── 9. MINIMAL BLANK PAGE EMPTY STATE ───────────────────── */
+/* ── 9. MINIMAL BUTTON-FREE BLANK PAGE EMPTY STATE ───────── */
 .empty-state {
   grid-column: 1 / -1;
   width: 100%;
