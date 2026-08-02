@@ -1,5 +1,5 @@
 /* ============================================================
-   MISE AI | INVENTORY LIST (Fully Optimized & Perfectly Aligned)
+   MISE AI | INVENTORY & GROCERY SYSTEM (Complete Stylesheet)
    inventory.css
    ============================================================ */
 
@@ -37,7 +37,7 @@
   --shadow-orange: 0 4px 18px rgba(232,98,26,0.32);
 }
 
-/* ── 2. GLOBAL RESET ─────────────────────────────────────── */
+/* ── 2. GLOBAL RESET & BASE STYLES ───────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -108,7 +108,7 @@ body {
 
 .d-sidebar::-webkit-scrollbar { display: none; }
 
-/* Warm background glow effect */
+/* Ambient background glow */
 .d-sidebar::before {
   content: '';
   position: absolute;
@@ -150,7 +150,7 @@ body {
 .d-brand-name img { width: 84px; height: auto; display: block; }
 .d-brand-sub { display: block; font-size: 10px; color: rgba(255,255,255,0.38); letter-spacing: 0.06em; margin-top: 2px; }
 
-/* Sidebar Navigation */
+/* Sidebar Navigation Links */
 .d-nav {
   display: flex;
   flex-direction: column;
@@ -319,7 +319,7 @@ body {
 .d-main::-webkit-scrollbar { width: 6px; }
 .d-main::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
 
-/* Sticky Topbar */
+/* Sticky Desktop Topbar */
 .d-topbar {
   display: flex;
   align-items: center;
@@ -347,6 +347,25 @@ body {
   width: 320px;
   margin-bottom: 0 !important;
 }
+
+/* Desktop Cart Icon Link */
+.d-cart-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  transition: all 0.2s ease;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.d-cart-btn svg { width: 18px; height: 18px; }
+.d-cart-btn:hover { border-color: var(--orange-border); background: var(--surface-hover); color: var(--orange); }
 
 /* Section Header */
 .d-section-header {
@@ -384,13 +403,8 @@ body {
   transform: translateY(-2px);
 }
 
-.d-items-grid .item-delete {
-  opacity: 0.8;
-}
-
-.d-items-grid .item-row:hover .item-delete {
-  opacity: 1;
-}
+.d-items-grid .item-delete { opacity: 0.8; }
+.d-items-grid .item-row:hover .item-delete { opacity: 1; }
 
 /* ── 6. MOBILE TOPBAR & MAIN CONTENT ─────────────────────── */
 .topbar {
@@ -428,6 +442,25 @@ body {
 .back-btn svg { width: 16px; height: 16px; }
 .back-btn:hover  { background: var(--orange-dim); }
 .back-btn:active { transform: scale(.93); }
+
+/* Mobile Cart Icon Button */
+.m-cart-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  transition: all 0.2s ease;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.m-cart-btn svg { width: 18px; height: 18px; }
+.m-cart-btn:hover { border-color: var(--orange-border); background: var(--surface-hover); color: var(--orange); }
 
 .topbar-spacer { width: 38px; height: 38px; flex-shrink: 0; }
 
@@ -1003,7 +1036,7 @@ body {
 .epick-opt--logo { background: #111111; border-color: rgba(232,98,26,0.35); }
 .epick-opt--logo img { width: 22px; height: 22px; object-fit: contain; display: block; }
 
-/* ── 11. MOBILE BOTTOM NAVIGATION ───────────────────────── */
+/* ── 11. MOBILE BOTTOM NAVIGATION & SAFE AREAS ──────────── */
 .m-bottom-nav {
   position: fixed;
   bottom: 0;
@@ -1064,7 +1097,7 @@ body {
   .toast { bottom: 28px; }
 }
 
-/* ── 13. RESPONSIVE BREAKPOINTS ──────────────────────────── */
+/* ── 13. RESPONSIVE BREAKPOINTS & MOBILE OVERRIDES ───────── */
 @media (max-width: 899px) {
   .empty-state {
     padding: 20px 0 32px;
