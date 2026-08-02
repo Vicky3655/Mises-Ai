@@ -672,11 +672,11 @@ body {
 .search-clear.visible { display: block; }
 .search-clear:hover { color: var(--orange); }
 
-/* ── 9. BROADER & COMPLETE EMPTY STATE ───────────────────── */
+/* ── 9. OPTIMIZED EMPTY STATE ────────────────────────────── */
 .empty-state {
   grid-column: 1 / -1;
   width: 100%;
-  padding: 16px 0 32px;
+  padding: 24px 0 48px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -684,30 +684,30 @@ body {
 
 .empty-state-card {
   width: 100%;
-  max-width: 620px;
-  background: var(--bg);
-  border: 1.5px dashed var(--orange-border);
+  max-width: 560px;
+  background: linear-gradient(180deg, var(--bg) 0%, var(--surface) 100%);
+  border: 1.5px dashed rgba(232, 98, 26, 0.30);
   border-radius: var(--radius);
-  padding: 46px 32px;
+  padding: 42px 28px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
-  box-shadow: var(--shadow-sm);
-  animation: emptyFadeIn 0.3s ease;
+  gap: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  animation: emptyFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes emptyFadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .empty-state-icon-wrap {
-  width: 72px;
-  height: 72px;
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
-  background: var(--surface);
+  background: var(--bg);
   border: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -717,36 +717,36 @@ body {
 }
 
 .empty-state-icon-wrap.logo-glow {
-  background: rgba(232, 98, 26, 0.08);
+  background: rgba(232, 98, 26, 0.07);
   border-color: rgba(232, 98, 26, 0.28);
-  box-shadow: 0 0 24px rgba(232, 98, 26, 0.18);
+  box-shadow: 0 0 28px rgba(232, 98, 26, 0.18);
 }
 
 .empty-state-logo {
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
   display: block;
 }
 
 .empty-state-icon {
-  font-size: 30px;
+  font-size: 28px;
   line-height: 1;
 }
 
 .empty-state-title {
-  font-size: 19px;
-  font-weight: 800;
+  font-size: 18px;
+  font-weight: 700;
   color: var(--text);
-  line-height: 1.3;
+  line-height: 1.35;
   margin: 0;
 }
 
 .empty-state-text {
   font-size: 13.5px;
   color: var(--sub);
-  max-width: 450px;
-  line-height: 1.65;
+  max-width: 420px;
+  line-height: 1.6;
   margin: 0;
 }
 
@@ -759,9 +759,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-top: 10px;
-  flex-wrap: wrap;
+  margin-top: 6px;
 }
 
 .empty-state-btn {
@@ -769,38 +767,19 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 11px 22px;
+  padding: 9px 18px;
   border-radius: 99px;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   transition: all 0.2s ease;
-  text-decoration: none;
-}
-
-.empty-state-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
-
-.empty-state-btn.primary {
-  background: var(--orange);
-  border: 1.5px solid var(--orange);
-  color: #ffffff;
-  box-shadow: 0 4px 16px rgba(232, 98, 26, 0.32);
-}
-
-.empty-state-btn.primary:hover {
-  background: var(--orange-dim);
-  border-color: var(--orange-dim);
-  transform: translateY(-1px);
-}
-
-.empty-state-btn.secondary {
   background: var(--surface);
   border: 1.5px solid var(--border-strong);
   color: var(--text);
 }
 
-.empty-state-btn.secondary:hover {
+.empty-state-btn:hover {
   border-color: var(--orange-border);
   background: var(--surface-hover);
   color: var(--orange);
@@ -1117,26 +1096,35 @@ body {
 
 /* ── 13. RESPONSIVE BREAKPOINTS ──────────────────────────── */
 @media (max-width: 899px) {
+  .empty-state {
+    padding: 16px 0 28px;
+  }
+
   .empty-state-card {
-    padding: 34px 20px;
-    gap: 12px;
-    border-style: solid;
-    border-color: var(--border);
+    padding: 32px 20px;
+    gap: 10px;
+    border-style: dashed;
+    border-color: rgba(232, 98, 26, 0.30);
     background: var(--surface);
   }
 
-  .empty-state-title { font-size: 17px; }
-  .empty-state-text { font-size: 13px; }
-
-  .empty-state-actions {
-    width: 100%;
-    flex-direction: column;
-    gap: 8px;
+  .empty-state-icon-wrap {
+    width: 60px;
+    height: 60px;
   }
 
-  .empty-state-btn {
-    width: 100%;
-    padding: 12px 18px;
+  .empty-state-logo {
+    width: 34px;
+    height: 34px;
+  }
+
+  .empty-state-title {
+    font-size: 16px;
+  }
+
+  .empty-state-text {
+    font-size: 13px;
+    max-width: 320px;
   }
 }
 
