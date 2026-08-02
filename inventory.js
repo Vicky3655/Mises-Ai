@@ -169,7 +169,7 @@ function render() {
   setTxt('dKitchenSelected', doneCount);
   setTxt('kitchenCount',     doneCount);
 
-  /* Broader & Complete Empty State Creator */
+  /* Button-Free Empty State Creator */
   const makeEmpty = () => {
     const wrap = document.createElement('div');
     wrap.className = 'empty-state';
@@ -180,49 +180,20 @@ function render() {
           <div class="empty-state-icon-wrap">
             <span class="empty-state-icon">🔍</span>
           </div>
-          <h3 class="empty-state-title">No matching ingredients</h3>
-          <p class="empty-state-text">We couldn't find any items matching "<strong>${escHTML(q)}</strong>". Check for typos or try searching another term.</p>
-          <div class="empty-state-actions">
-            <button type="button" class="empty-state-btn secondary" id="emptyClearBtn">
-              Clear Search Filter
-            </button>
-          </div>
+          <h3 class="empty-state-title">No matching items found</h3>
+          <p class="empty-state-text">We couldn't find any ingredients matching "<strong>${escHTML(q)}</strong>". Try checking for typos or searching another term.</p>
         </div>
       `;
-      setTimeout(() => {
-        wrap.querySelector('#emptyClearBtn')?.addEventListener('click', () => {
-          if (dom.searchInput)  dom.searchInput.value  = '';
-          if (dom.mSearchInput) dom.mSearchInput.value = '';
-          if (dom.searchClear)  dom.searchClear.classList.remove('visible');
-          if (dom.mSearchClear) dom.mSearchClear.classList.remove('visible');
-          state.filter = '';
-          render();
-        });
-      }, 0);
     } else {
       wrap.innerHTML = `
         <div class="empty-state-card">
           <div class="empty-state-icon-wrap logo-glow">
             <img src="mise_ai_logo.png" alt="Mise AI" class="empty-state-logo">
           </div>
-          <h3 class="empty-state-title">Your Kitchen Pantry is Empty</h3>
-          <p class="empty-state-text">Track your fresh produce, spices, grains, and meats here so Mise AI can help you organize ingredients and plan meals.</p>
-          <div class="empty-state-actions">
-            <button type="button" class="empty-state-btn primary" id="emptyAddBtn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 4.5v15m7.5-7.5h-15"/></svg>
-              Add First Item
-            </button>
-            <button type="button" class="empty-state-btn secondary" id="emptyQuickBtn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 4.5v15m7.5-7.5h-15"/></svg>
-              Quick Entry
-            </button>
-          </div>
+          <h3 class="empty-state-title">No items found in your list</h3>
+          <p class="empty-state-text">Your kitchen inventory is currently empty. Input the ingredients and food items you have at home so Mise AI can help you plan meals.</p>
         </div>
       `;
-      setTimeout(() => {
-        wrap.querySelector('#emptyAddBtn')?.addEventListener('click', () => openModal('Add New Item'));
-        wrap.querySelector('#emptyQuickBtn')?.addEventListener('click', () => quickEntry());
-      }, 0);
     }
 
     return wrap;
