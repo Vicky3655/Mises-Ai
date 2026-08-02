@@ -75,11 +75,7 @@ const EMOJI_LIST = [
   { e:'🧀', cat:'dairy',   n:'Cheese'          },
 ];
 
-/* ── STATE ──
-   Items are no longer hardcoded here. inventory_patch.js loads the
-   signed-in user's rows from Supabase (table: inventory_items) on
-   startup and populates state.items, then calls render(). nextId is
-   gone — Supabase assigns each row a real UUID on insert. */
+/* ── STATE ── */
 const state = {
   items: [],
   filter:     '',
@@ -113,9 +109,7 @@ function showToast(msg) {
   state.toastTimer = setTimeout(() => dom.toast.classList.remove('show'), 3000);
 }
 
-/* ── BUILD ITEM ROW ──
-   Creates a fully-wired DOM row for either the desktop grid
-   or the mobile list — same HTML, CSS handles the layout diff. */
+/* ── BUILD ITEM ROW ── */
 function buildItemRow(item) {
   const row = document.createElement('div');
   row.className = 'item-row' + (item.checked ? ' checked' : '');
@@ -154,9 +148,7 @@ function buildItemRow(item) {
   return row;
 }
 
-/* ── RENDER ──
-   Populates BOTH #itemsList (desktop grid) and #mItemsList (mobile list).
-   Also refreshes section-title badges and desktop sidebar stats. */
+/* ── RENDER ── */
 function render() {
   const q        = state.filter.trim().toLowerCase();
   const filtered = q
@@ -169,7 +161,7 @@ function render() {
     el.innerHTML = `Recently Added <span class="count-badge">${state.items.length}</span>`;
   });
 
-  /* Desktop sidebar stat counters (safe no-ops when elements absent) */
+  /* Desktop sidebar stat counters */
   const setTxt = (id, v) => { const e = $(id); if (e) e.textContent = v; };
   const doneCount = state.items.filter(i => i.checked).length;
   setTxt('dTotalItems',      state.items.length);
@@ -177,21 +169,62 @@ function render() {
   setTxt('dKitchenSelected', doneCount);
   setTxt('kitchenCount',     doneCount);
 
-  /* Empty-state node (avoids raw HTML with logo placeholder) */
+  /* Broader & Complete Empty State Creator */
   const makeEmpty = () => {
     const wrap = document.createElement('div');
     wrap.className = 'empty-state';
+
     if (q) {
       wrap.innerHTML = `
-        <div class="empty-state-icon">🔍</div>
-        <div class="empty-state-text">No items match "${escHTML(q)}"</div>`;
+        <div class="empty-state-card">
+          <div class="empty-state-icon-wrap">
+            <span class="empty-state-icon">🔍</span>
+          </div>
+          <h3 class="empty-state-title">No matching ingredients</h3>
+          <p class="empty-state-text">We couldn't find any items matching "<strong>${escHTML(q)}</strong>". Check for typos or try searching another term.</p>
+          <div class="empty-state-actions">
+            <button type="button" class="empty-state-btn secondary" id="emptyClearBtn">
+              Clear Search Filter
+            </button>
+          </div>
+        </div>
+      `;
+      setTimeout(() => {
+        wrap.querySelector('#emptyClearBtn')?.addEventListener('click', () => {
+          if (dom.searchInput)  dom.searchInput.value  = '';
+          if (dom.mSearchInput) dom.mSearchInput.value = '';
+          if (dom.searchClear)  dom.searchClear.classList.remove('visible');
+          if (dom.mSearchClear) dom.mSearchClear.classList.remove('visible');
+          state.filter = '';
+          render();
+        });
+      }, 0);
     } else {
-      const img = `<img src="mise_ai_logo.png" alt=""
-        style="width:42px;height:42px;object-fit:contain;opacity:.35">`;
       wrap.innerHTML = `
-        <div class="empty-state-icon">${img}</div>
-        <div class="empty-state-text">No items yet — tap <b>Create New</b> to add one!</div>`;
+        <div class="empty-state-card">
+          <div class="empty-state-icon-wrap logo-glow">
+            <img src="mise_ai_logo.png" alt="Mise AI" class="empty-state-logo">
+          </div>
+          <h3 class="empty-state-title">Your Kitchen Pantry is Empty</h3>
+          <p class="empty-state-text">Track your fresh produce, spices, grains, and meats here so Mise AI can help you organize ingredients and plan meals.</p>
+          <div class="empty-state-actions">
+            <button type="button" class="empty-state-btn primary" id="emptyAddBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 4.5v15m7.5-7.5h-15"/></svg>
+              Add First Item
+            </button>
+            <button type="button" class="empty-state-btn secondary" id="emptyQuickBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 4.5v15m7.5-7.5h-15"/></svg>
+              Quick Entry
+            </button>
+          </div>
+        </div>
+      `;
+      setTimeout(() => {
+        wrap.querySelector('#emptyAddBtn')?.addEventListener('click', () => openModal('Add New Item'));
+        wrap.querySelector('#emptyQuickBtn')?.addEventListener('click', () => quickEntry());
+      }, 0);
     }
+
     return wrap;
   };
 
@@ -199,15 +232,15 @@ function render() {
   [dom.itemsList, dom.mItemsList].forEach(list => {
     if (!list) return;
     list.innerHTML = '';
-    if (filtered.length === 0) { list.appendChild(makeEmpty()); return; }
+    if (filtered.length === 0) {
+      list.appendChild(makeEmpty());
+      return;
+    }
     filtered.forEach(item => list.appendChild(buildItemRow(item)));
   });
 }
 
-/* ── ITEM ACTIONS ──
-   toggleItem / deleteItem / addItem are overridden by inventory_patch.js
-   to add the Supabase round-trip. The versions below are the local-only
-   fallback and are only reachable if inventory_patch.js failed to load. */
+/* ── ITEM ACTIONS ── */
 function toggleItem(id) {
   const item = state.items.find(i => i.id === id);
   if (!item) return;
@@ -265,7 +298,6 @@ function initEmojiPicker() {
   _eWrap    = $('emojiPickerWrap');
   if (!_eTrigger) return;
 
-  /* Build category tabs */
   _eCats.innerHTML = EMOJI_CATS.map(c =>
     `<button type="button" class="epick-cat${c.key === 'all' ? ' active' : ''}"
       data-cat="${c.key}" title="${c.label}">
@@ -286,7 +318,6 @@ function initEmojiPicker() {
 
   _eTrigger.addEventListener('click', e => { e.stopPropagation(); toggleEmojiPanel(); });
 
-  /* Close on outside click */
   document.addEventListener('click', e => {
     if (epick.open && !_eWrap?.contains(e.target)) closeEmojiPanel();
   });
@@ -301,7 +332,6 @@ function renderEmojiGrid() {
     ? EMOJI_LIST
     : EMOJI_LIST.filter(i => i.cat === epick.cat);
 
-  /* Logo is always the first option */
   _eGrid.innerHTML =
     `<button type="button" class="epick-opt epick-opt--logo" data-emoji="__MISE_LOGO__"
        title="Mise AI Logo" aria-label="Use Mise AI logo">
@@ -364,10 +394,7 @@ function resetEmojiPicker() {
   setPickerDefault();
 }
 
-/* ── SAVE MODAL ──
-   Now async: awaits the Supabase insert (via the patched addItem)
-   before closing the modal / showing success, so a failed save keeps
-   the modal open with the user's typed data intact. */
+/* ── SAVE MODAL ── */
 async function saveModal() {
   const name  = dom.itemName.value.trim();
   const qty   = dom.itemQty.value.trim();
@@ -422,11 +449,9 @@ function setupSearch() {
 
 /* ── EVENTS ── */
 function setupEvents() {
-  /* Mobile CTA buttons */
   dom.createNewBtn?.addEventListener('click',  () => openModal('Add New Item'));
   dom.quickEntryBtn?.addEventListener('click', quickEntry);
 
-  /* Modal */
   dom.modalClose?.addEventListener('click',   closeModal);
   dom.modalCancel?.addEventListener('click',  closeModal);
   dom.modalSave?.addEventListener('click',    saveModal);
@@ -437,19 +462,16 @@ function setupEvents() {
     el?.addEventListener('keydown', e => { if (e.key === 'Enter') saveModal(); });
   });
 
-  /* See All */
   const onSeeAll = () => showToast('📋 Showing all inventory items');
   dom.seeAllBtn?.addEventListener('click',  onSeeAll);
   dom.mSeeAllBtn?.addEventListener('click', onSeeAll);
 
-  /* Back */
   const onBack = () => document.referrer
     ? history.back()
     : showToast('🏠 Navigate to your main page');
   dom.backBtn?.addEventListener('click',  onBack);
   dom.mBackBtn?.addEventListener('click', onBack);
 
-  /* Global keyboard shortcuts */
   document.addEventListener('keydown', e => {
     if (e.key === 'n' && !isInputFocused()) { e.preventDefault(); openModal(); }
     if (e.key === 'Escape') closeModal();
@@ -470,13 +492,7 @@ function isInputFocused() {
   return tag === 'INPUT' || tag === 'TEXTAREA';
 }
 
-/* ── INIT ──
-   cacheDOM/setupSearch/setupEvents/initEmojiPicker/render() all still
-   run immediately so the UI (modal, search, empty-state) is interactive
-   right away. inventory_patch.js's own DOMContentLoaded listener (run
-   right after this one, since it's registered second) does the auth
-   check and loads the real Supabase rows into state.items, then calls
-   render() again. */
+/* ── INIT ── */
 function init() {
   cacheDOM();
   setupSearch();
