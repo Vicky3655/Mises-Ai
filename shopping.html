@@ -64,20 +64,15 @@
       </div>
 
       <div class="d-content">
-        <!-- Quick add input -->
+        <!-- Add bar with dynamic autocomplete and user category select -->
         <div class="add-bar">
-          <input type="text" id="addItemInput" placeholder="Add an item (e.g., 2 kg Fresh Tomatoes, 1 L Palm Oil)…" autocomplete="off">
+          <input type="text" id="addItemInput" placeholder="Add grocery item (e.g., 2 kg Fresh Tomatoes)…" autocomplete="off" list="itemSuggestionsList">
           <select id="categorySelect">
-            <option value="Produce">🥦 Produce</option>
-            <option value="Proteins">🥩 Meat & Fish</option>
-            <option value="Spices">🌶️ Spices & Oils</option>
-            <option value="Pantry">🫙 Pantry & Staples</option>
-            <option value="Dairy">🥛 Dairy & Bakery</option>
+            <!-- Dynamically populated by JS -->
           </select>
           <button id="addBtn">Add Item</button>
         </div>
 
-        <!-- List container -->
         <div id="shoppingListContainer" class="shopping-list-container"></div>
       </div>
     </main>
@@ -95,7 +90,7 @@
 
     <main class="content">
       <div class="add-bar m-add-bar">
-        <input type="text" id="mAddItemInput" placeholder="Add grocery item…">
+        <input type="text" id="mAddItemInput" placeholder="Add grocery item…" list="itemSuggestionsList">
         <button id="mAddBtn">＋</button>
       </div>
 
@@ -123,7 +118,7 @@
     </nav>
   </div>
 
-  <!-- ORDER / SUPERMARKET MODAL -->
+  <!-- SUPERMARKET / MALL ORDER MODAL -->
   <div class="modal-overlay" id="storeModalOverlay">
     <div class="modal">
       <div class="modal-header">
@@ -131,10 +126,9 @@
         <button class="modal-close" id="closeStoreModal">✕</button>
       </div>
       <div class="modal-body">
-        <p class="modal-sub">Select your preferred delivery service or mall partner to export your <strong id="modalItemCount">0 items</strong>:</p>
+        <p class="modal-sub">Select your delivery partner to order <strong id="modalItemCount">0 items</strong>:</p>
         
         <div class="store-grid">
-          <!-- Option 1: Chowdeck -->
           <div class="store-card" onclick="triggerStoreCheckout('chowdeck')">
             <div class="store-icon">🚀</div>
             <div class="store-info">
@@ -144,7 +138,6 @@
             <span class="store-arrow">↗</span>
           </div>
 
-          <!-- Option 2: Jumia Foods / Grocery -->
           <div class="store-card" onclick="triggerStoreCheckout('jumia')">
             <div class="store-icon">📦</div>
             <div class="store-info">
@@ -154,17 +147,15 @@
             <span class="store-arrow">↗</span>
           </div>
 
-          <!-- Option 3: WhatsApp Supermarket Direct -->
           <div class="store-card" onclick="triggerStoreCheckout('whatsapp')">
             <div class="store-icon">💬</div>
             <div class="store-info">
               <h4>WhatsApp Merchant Direct</h4>
-              <p>Send clean list directly to local store manager</p>
+              <p>Send list directly to local supermarket manager</p>
             </div>
             <span class="store-arrow">↗</span>
           </div>
 
-          <!-- Option 4: Instacart (US/UK Global) -->
           <div class="store-card" onclick="triggerStoreCheckout('instacart')">
             <div class="store-icon">🥕</div>
             <div class="store-info">
@@ -178,7 +169,6 @@
     </div>
   </div>
 
-  <!-- Toast -->
   <div class="toast" id="toast"></div>
 
   <script src="shopping.js"></script>
