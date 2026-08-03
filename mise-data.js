@@ -217,5 +217,87 @@
         .eq('user_id', user.id);
       if (error) throw error;
     },
+
+    /* ══════════════════════ SHOPPING LIST ══════════════════════
+       Backs shopping.html / shopping.js. Requires a `shopping_items`
+       table — run shopping_items_schema.sql once in the Supabase SQL
+       editor if it isn't already in your project. */
+
+    async listShoppingItems() {
+      const sb = sbOrThrow();
+      const { data, error } = await sb
+        .from('shopping_items')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+
+    /** Distinct categories currently in use, so custom categories the
+     *  user has typed before resurface without needing their own table. */
+    async listShoppingCategories() {
+      const sb = sbOrThrow();
+      const { data, error } = await sb
+        .from('shopping_items')
+        .select('category');
+      if (error) throw error;
+      return [...new Set((data || []).map(r => r.category).filter(Boolean))];
+    },
+
+    /** Name suggestions for the add-item autocomplete, drawn from the
+     *  user's own inventory plus their shopping history instead of a
+     *  separate hand-maintained library. Resilient to either source
+     *  (or the shopping_items table itself) not existing yet. */
+    async getShoppingSuggestions() {
+      const sb = sbOrThrow();
+      const [invResult, histResult] = await Promise.allSettled([
+        sb.from('inventory_items').select('name'),
+        sb.from('shopping_items').select('name').order('created_at', { ascending: false }).limit(100),
+      ]);
+      const names = [];
+      if (invResult.status === 'fulfilled' && !invResult.value.error) {
+        names.push(...(invResult.value.data || []).map(r => r.name));
+      }
+      if (histResult.status === 'fulfilled' && !histResult.value.error) {
+        names.push(...(histResult.value.data || []).map(r => r.name));
+      }
+      return [...new Set(names)].sort((a, b) => a.localeCompare(b));
+    },
+
+    async addShoppingItem({ name, qty, category }) {
+      const sb = sbOrThrow();
+      const user = await window.MiseAuth.getUser();
+      if (!user) throw new Error('Not signed in');
+      const { data, error } = await sb
+        .from('shopping_items')
+        .insert({
+          user_id:  user.id,
+          name,
+          qty:      qty || null,
+          category: category || 'Pantry & Staples',
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async toggleShoppingItem(id, checked) {
+      const sb = sbOrThrow();
+      const { error } = await sb
+        .from('shopping_items')
+        .update({ checked })
+        .eq('id', id);
+      if (error) throw error;
+    },
+
+    async deleteShoppingItem(id) {
+      const sb = sbOrThrow();
+      const { error } = await sb
+        .from('shopping_items')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
   };
 })();
