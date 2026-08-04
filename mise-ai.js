@@ -103,12 +103,24 @@ function renderMiseUser(user) {
   const meta = user.user_metadata || {};
   const displayName = meta.full_name || user.email || 'Chef';
   const firstName = displayName.split(' ')[0];
+  const avatarSrc = meta.avatar_url || initialsAvatar(displayName);
 
   const nameEl = document.getElementById('userFirstName');
   if (nameEl) nameEl.textContent = firstName;
 
   const avatarEl = dom['avatarBtn'];
-  if (avatarEl) avatarEl.src = meta.avatar_url || initialsAvatar(displayName);
+  if (avatarEl) avatarEl.src = avatarSrc;
+
+  // Account dropdown (opens from the profile pic) — same picture, plus
+  // full name and email so it's clear which account is signed in.
+  const menuPic = document.getElementById('avatarMenuPic');
+  if (menuPic) menuPic.src = avatarSrc;
+
+  const menuName = document.getElementById('avatarMenuName');
+  if (menuName) menuName.textContent = displayName;
+
+  const menuEmail = document.getElementById('avatarMenuEmail');
+  if (menuEmail) menuEmail.textContent = user.email || '';
 }
 
 function initialsAvatar(name) {
@@ -125,6 +137,57 @@ function initialsAvatar(name) {
       font-family="Plus Jakarta Sans, sans-serif" font-size="30" fill="#fff">${initials}</text>
   </svg>`;
   return 'data:image/svg+xml;base64,' + btoa(svg);
+}
+
+/* ── ACCOUNT DROPDOWN ────────────────────────────────────────
+   Opens from the profile pic (desktop and mobile share the same
+   #avatarBtn element — CSS just repositions it per viewport). Shows
+   who's signed in and offers Log Out. Click-outside, Escape, and
+   keyboard (Enter/Space on the avatar) all work. */
+function setupAvatarMenu() {
+  const trigger    = dom['avatarBtn'];
+  const menu       = document.getElementById('avatarMenu');
+  const logoutBtn  = document.getElementById('avatarLogoutBtn');
+  if (!trigger || !menu) return;
+
+  function openMenu() {
+    // Avoid the hamburger drawer and this dropdown being open at once.
+    if (typeof window.closeMobileDrawer === 'function') window.closeMobileDrawer();
+    menu.classList.add('open');
+    menu.setAttribute('aria-hidden', 'false');
+    trigger.setAttribute('aria-expanded', 'true');
+  }
+  function closeMenu() {
+    menu.classList.remove('open');
+    menu.setAttribute('aria-hidden', 'true');
+    trigger.setAttribute('aria-expanded', 'false');
+  }
+  function toggleMenu(e) {
+    e.stopPropagation();
+    menu.classList.contains('open') ? closeMenu() : openMenu();
+  }
+
+  trigger.addEventListener('click', toggleMenu);
+  trigger.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleMenu(e); }
+  });
+
+  document.addEventListener('click', e => {
+    if (!menu.classList.contains('open')) return;
+    if (menu.contains(e.target) || trigger.contains(e.target)) return;
+    closeMenu();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeMenu();
+  });
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      closeMenu();
+      window.MiseAuth.logOut();
+    });
+  }
 }
 
 /* ── DOM CACHE ───────────────────────────────────────────── */
@@ -439,9 +502,6 @@ function setupNotifications() {
       showToast('No new notifications');
     }
   });
-
-  const avatar = dom['avatarBtn'];
-  if (avatar) avatar.addEventListener('click', () => showToast('👤 Profile settings coming soon!'));
 }
 
 /* ── GREETING TIME ───────────────────────────────────────── */
@@ -463,6 +523,7 @@ async function init() {
   cacheDOM();
   setGreeting();
   renderMiseUser(session.user);
+  setupAvatarMenu();
   buildHistory();
   setupNavTabs();
   setupCards();
